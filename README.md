@@ -63,7 +63,6 @@ The recovery operation validates that the provided private key matches the recov
 
 - [Cobra](https://github.com/spf13/cobra) - CLI command structure
 - [Viper](https://github.com/spf13/viper) - Configuration management
-- Sepior TSM SDK - Provides cryptographic operations for MPC
 
 ## License
 
