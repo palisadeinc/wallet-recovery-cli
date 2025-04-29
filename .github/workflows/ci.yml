@@ -132,19 +132,16 @@ jobs:
           CHECKSUM_NAME="${BINARY_NAME}.sha256"
           CHECKSUM_PATH="dist/${CHECKSUM_NAME}"
           echo "Generating checksum ${CHECKSUM_NAME} ..."
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sha256sum "dist/${BINARY_NAME}" > "${CHECKSUM_PATH}"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
+          # Use command based on TARGET OS ($GOOS), running on Linux runner
+          if [ "$GOOS" = "darwin" ]; then
+            # macOS uses shasum
             shasum -a 256 "dist/${BINARY_NAME}" > "${CHECKSUM_PATH}"
-          elif [ "$RUNNER_OS" = "Windows" ]; then
-            # CertUtil outputs extra header/footer lines, PowerShell is cleaner
-            # The output format of Get-FileHash is "Algorithm Hash Path", we need "Hash Filename"
-            (Get-FileHash "dist\${BINARY_NAME}" -Algorithm SHA256).Hash | Out-File -Encoding ASCII "${CHECKSUM_PATH}"
-            # Append the filename like sha256sum does for consistency (optional, but good practice)
-            # Note: Using PowerShell syntax within bash step requires care or separate pwsh step.
-            # For simplicity, let's just output the hash directly. Tools usually just need the hash.
-            # If exact sha256sum format is needed, further PowerShell scripting is required.
+          else
+            # Linux and Windows targets can use sha256sum on the Linux runner
+            sha256sum "dist/${BINARY_NAME}" > "${CHECKSUM_PATH}"
           fi
+          # Optional: Adjust output format if needed (e.g., remove filename from sha256sum output)
+          # Example: sha256sum "dist/${BINARY_NAME}" | cut -d' ' -f1 > "${CHECKSUM_PATH}"
           echo "CHECKSUM_PATH=${CHECKSUM_PATH}" >> $GITHUB_ENV
           echo "CHECKSUM_NAME=${CHECKSUM_NAME}" >> $GITHUB_ENV
 
