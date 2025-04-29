@@ -73,10 +73,11 @@ jobs:
 
   build:
     name: Build Binaries (${{ matrix.goos }}/${{ matrix.goarch }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [lint, test, vulnerability-check]
     permissions:
       id-token: write
+      contents: read
       attestations: write
     # Only run on push to main or on release creation
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
