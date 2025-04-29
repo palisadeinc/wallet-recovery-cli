@@ -142,11 +142,6 @@ jobs:
           echo "CHECKSUM_PATH=${CHECKSUM_PATH}" >> $GITHUB_ENV
           echo "CHECKSUM_NAME=${CHECKSUM_NAME}" >> $GITHUB_ENV
 
-      - name: Generate signed build provenance attestations
-        uses: actions/attest-build-provenance@v1 # Use v1 as v2 doesn't seem to exist yet, correct if needed
-        with:
-          subject-path: ${{ env.BINARY_PATH }}
-
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
         with:
