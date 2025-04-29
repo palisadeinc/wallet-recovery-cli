@@ -1,6 +1,6 @@
 module github.com/palisadeinc/mpc-recovery
 
-go 1.24.1
+go 1.24.2
 
 replace gitlab.com/sepior/go-tsm-sdkv2 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
 
