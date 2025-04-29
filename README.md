@@ -46,12 +46,17 @@ Recover an ECDSA private key from recovery data:
 ```
 
 Required flags:
-- `--recovery-kit-file`: Path to the recovery data file
-- `--private-key-file`: Path to the RSA private key file
+- `--recovery-kit-file`: Path to the recovery data file (base64-encoded JSON, typically downloaded from the customer's S3 bucket)
+- `--private-key-file`: Path to the RSA private key file (hex-encoded DER, PKCS#1 or PKCS#8 format)
 - `--quorum-id`: UUID of the quorum
 - `--key-id`: UUID of the key
 
-The recovery operation validates that the provided private key matches the recovery data before attempting to recover the ECDSA private key.
+The recovery operation performs the following steps:
+1. Reads and parses the recovery kit file and the RSA private key file.
+2. Validates that the public key derived from the provided RSA private key matches the public key stored within the recovery data.
+3. Validates the integrity of the recovery data itself using cryptographic checks involving the ERS public key and the wallet's root public key.
+4. If both validations pass, it recovers the ECDSA private key using the recovery data and the provided RSA private key.
+5. The recovered ECDSA private key is printed to standard output in base64 format.
 
 ## Security Considerations
 
