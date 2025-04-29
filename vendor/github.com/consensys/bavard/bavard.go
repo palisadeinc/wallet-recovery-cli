@@ -1,16 +1,5 @@
-// Copyright 2020 ConsenSys Software Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2020-2024 Consensys Software Inc.
+// Licensed under the Apache License, Version 2.0. See the LICENSE file for details.
 
 // Package bavard contains helper functions to generate consistent code from text/template templates.
 // it is used by github.com/consensys/gnark && github.com/consensys/gnark-crypto
@@ -28,8 +17,13 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"rsc.io/tmplfunc"
+)
+
+const (
+	EnvFilter = "BAVARD_FILTER" // environment variable to filter generation
 )
 
 // Bavard root object to configure the code generation from text/template
@@ -70,9 +64,21 @@ type Entry struct {
 	BuildTag  string
 }
 
+func ShouldGenerate(output string) bool {
+	envFilter := os.Getenv(EnvFilter)
+	if envFilter == "" {
+		return true
+	}
+
+	return strings.Contains(output, envFilter)
+}
+
 // GenerateFromString will concatenate templates and create output file from executing the resulting text/template
 // see other package functions to add options (package name, licensing, build tags, ...)
 func GenerateFromString(output string, templates []string, data interface{}, options ...func(*Bavard) error) error {
+	if !ShouldGenerate(output) {
+		return nil // skip generation
+	}
 	var b Bavard
 
 	var buf bytes.Buffer
@@ -103,6 +109,9 @@ func GenerateFromString(output string, templates []string, data interface{}, opt
 // GenerateFromFiles will concatenate templates and create output file from executing the resulting text/template
 // see other package functions to add options (package name, licensing, build tags, ...)
 func GenerateFromFiles(output string, templateF []string, data interface{}, options ...func(*Bavard) error) error {
+	if !ShouldGenerate(output) {
+		return nil // skip generation
+	}
 	var b Bavard
 	var buf bytes.Buffer
 
@@ -148,7 +157,7 @@ func (b *Bavard) config(buf *bytes.Buffer, output string, options ...func(*Bavar
 	}
 
 	if b.buildTag != "" {
-		if _, err := buf.WriteString("// +build " + b.buildTag + "\n"); err != nil {
+		if _, err := buf.WriteString("//go:build  " + b.buildTag + "\n"); err != nil {
 			return err
 		}
 	}
@@ -222,25 +231,24 @@ func aggregate(values []string) string {
 
 // Apache2Header returns a Apache2 header string
 func Apache2Header(copyrightHolder string, year int) string {
-	apache2 := `
-	// Copyright %d %s
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//     http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
-	`
-	return fmt.Sprintf(apache2, year, copyrightHolder)
+	// get current year from a timestamp
+	currentYear := time.Now().Year()
+	if currentYear > year {
+		apache2 := `
+		// Copyright %d-%d %s
+		// Licensed under the Apache License, Version 2.0. See the LICENSE file for details.
+		`
+		return fmt.Sprintf(apache2, year, currentYear, copyrightHolder)
+	} else {
+		apache2 := `
+		// Copyright %d %s
+		// Licensed under the Apache License, Version 2.0. See the LICENSE file for details.
+		`
+		return fmt.Sprintf(apache2, year, copyrightHolder)
+	}
 }
 
-// Apache2 returns a bavard option to be used in Generate writing an apache2 licence header in the generated file
+// Apache2 returns a bavard option to be used in Generate writing an apache2 license header in the generated file
 func Apache2(copyrightHolder string, year int) func(*Bavard) error {
 	return func(b *Bavard) error {
 		b.license = Apache2Header(copyrightHolder, year)
@@ -308,7 +316,7 @@ func Funcs(funcs template.FuncMap) func(*Bavard) error {
 
 // Generate an entry with generator default config
 func (b *BatchGenerator) Generate(data interface{}, packageName string, baseTmplDir string, entries ...Entry) error {
-	return b.GenerateWithOptions(data, packageName, baseTmplDir, make([]func(*Bavard)error,0), entries...)
+	return b.GenerateWithOptions(data, packageName, baseTmplDir, make([]func(*Bavard) error, 0), entries...)
 }
 
 // GenerateWithOptions allows adding extra configuration (helper functions etc.) to a batch generation
@@ -320,7 +328,7 @@ func (b *BatchGenerator) GenerateWithOptions(data interface{}, packageName strin
 		wg.Add(1)
 		go func(entry Entry) {
 			defer wg.Done()
-			opts := make([]func(*Bavard) error, len(b.defaultOpts) + len(extraOptions))
+			opts := make([]func(*Bavard) error, len(b.defaultOpts)+len(extraOptions))
 			copy(opts, b.defaultOpts)
 			copy(opts[len(b.defaultOpts):], extraOptions)
 			if entry.BuildTag != "" {
