@@ -75,10 +75,10 @@ jobs:
     name: Build Binaries (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-22.04
     needs: [lint, test, vulnerability-check]
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
+    # permissions:
+      # id-token: write
+      # contents: read
+      # attestations: write
     # Only run on push to main or on release creation
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
     strategy:
@@ -171,13 +171,13 @@ jobs:
           asset_name: ${{ env.BINARY_NAME }}
           asset_content_type: application/octet-stream
 
-      - name: Upload Checksum Release Asset # <-- New Step
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.CHECKSUM_PATH }}
-          asset_name: ${{ env.CHECKSUM_NAME }}
-          asset_content_type: text/plain 
+      # - name: Upload Checksum Release Asset 
+      #   if: github.event_name == 'release'
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }}
+      #     asset_path: ${{ env.CHECKSUM_PATH }}
+      #     asset_name: ${{ env.CHECKSUM_NAME }}
+      #     asset_content_type: text/plain 
