@@ -77,6 +77,9 @@ jobs:
     needs: [lint, test, vulnerability-check]
     # Only run on push to main or on release creation
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'release')
+    permissions:
+      id-token: write
+      attestations: write
     strategy:
       matrix:
         goos: [linux, windows, darwin]
@@ -125,20 +128,53 @@ jobs:
           echo "BINARY_PATH=dist/${BINARY_NAME}" >> $GITHUB_ENV # Pass path to next step
           echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV # Pass name to next step
 
+          # Generate SHA256 Checksum
+          CHECKSUM_NAME="${BINARY_NAME}.sha256"
+          CHECKSUM_PATH="dist/${CHECKSUM_NAME}"
+          echo "Generating checksum ${CHECKSUM_NAME} ..."
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sha256sum "dist/${BINARY_NAME}" > "${CHECKSUM_PATH}"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            shasum -a 256 "dist/${BINARY_NAME}" > "${CHECKSUM_PATH}"
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            # CertUtil outputs extra header/footer lines, PowerShell is cleaner
+            # The output format of Get-FileHash is "Algorithm Hash Path", we need "Hash Filename"
+            (Get-FileHash "dist\${BINARY_NAME}" -Algorithm SHA256).Hash | Out-File -Encoding ASCII "${CHECKSUM_PATH}"
+            # Append the filename like sha256sum does for consistency (optional, but good practice)
+            # Note: Using PowerShell syntax within bash step requires care or separate pwsh step.
+            # For simplicity, let's just output the hash directly. Tools usually just need the hash.
+            # If exact sha256sum format is needed, further PowerShell scripting is required.
+          fi
+          echo "CHECKSUM_PATH=${CHECKSUM_PATH}" >> $GITHUB_ENV
+          echo "CHECKSUM_NAME=${CHECKSUM_NAME}" >> $GITHUB_ENV
+
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: recovery-${{ matrix.goos }}-${{ matrix.goarch }}-${{ env.VERSION }} # Unique artifact name per build
-          path: ${{ env.BINARY_PATH }}
-          if-no-files-found: error # Fail if the binary wasn't created 
+          path: |
+            ${{ env.BINARY_PATH }}
+            ${{ env.CHECKSUM_PATH }} # Also include checksum in the workflow artifact
+          if-no-files-found: error # Fail if the binary wasn't created
 
-      - name: Upload Release Asset
+      - name: Upload Binary Release Asset
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }} 
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ env.BINARY_PATH }}
           asset_name: ${{ env.BINARY_NAME }}
-          asset_content_type: application/octet-stream 
+          asset_content_type: application/octet-stream
+
+      - name: Upload Checksum Release Asset # <-- New Step
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.CHECKSUM_PATH }}
+          asset_name: ${{ env.CHECKSUM_NAME }}
+          asset_content_type: text/plain 
