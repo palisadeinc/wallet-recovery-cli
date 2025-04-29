@@ -1,0 +1,60 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24' # Match the go.mod version
+        cache: true # Enable caching for Go modules and build cache
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Cache Go binaries
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin # Default GOBIN path
+        key: ${{ runner.os }}-go-bin-${{ hashFiles('**/go.sum') }} # Cache key based on OS and dependencies
+        restore-keys: |
+          ${{ runner.os }}-go-bin-
+
+    - name: Install govulncheck if needed
+      run: |
+        if ! command -v govulncheck &> /dev/null
+        then
+          echo "govulncheck not found, installing..."
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+        else
+          echo "govulncheck found in cache."
+        fi
+      env:
+        GOBIN: ~/go/bin # Ensure install path matches cache path
+
+    - name: Run govulncheck
+      run: ~/go/bin/govulncheck ./... # Explicitly use the cached path
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+        version: latest 
+        # Optional: working directory, useful for monorepos
+        # working-directory: somedir
+        # Optional: golangci-lint command line arguments.
+        # args: --issues-exit-code=0
+        # Optional: show only new issues if it's a pull request. The default value is `false`.
+        # only-new-issues: true 
