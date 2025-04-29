@@ -75,11 +75,11 @@ jobs:
     name: Build Binaries (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
     needs: [lint, test, vulnerability-check]
+    permissions:
+      id-token: write
+      attestations: write
     # Only run on push to main or on release creation
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
-    # permissions:
-    #   id-token: write
-    #   attestations: write
     strategy:
       matrix:
         goos: [linux, windows, darwin]
@@ -144,6 +144,11 @@ jobs:
           # Example: sha256sum "dist/${BINARY_NAME}" | cut -d' ' -f1 > "${CHECKSUM_PATH}"
           echo "CHECKSUM_PATH=${CHECKSUM_PATH}" >> $GITHUB_ENV
           echo "CHECKSUM_NAME=${CHECKSUM_NAME}" >> $GITHUB_ENV
+
+      - name: Generate signed build provenance attestations
+        uses: actions/attest-build-provenance@v1 # Use v1 as v2 doesn't seem to exist yet, correct if needed
+        with:
+          subject-path: ${{ env.BINARY_PATH }}
 
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
