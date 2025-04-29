@@ -71,4 +71,4 @@ The recovery operation performs the following steps:
 
 ## License
 
-Apache License (as specified in configuration)
+Apache License (as specified in configuration) 
