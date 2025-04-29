@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"fmt"
 	"io"
 	"os"
+
+	"github.com/pkg/errors"
 )
-import "github.com/pkg/errors"
 
 func OpenFile(filepath string) ([]byte, error) {
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
@@ -15,7 +17,11 @@ func OpenFile(filepath string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.WithMessage(err, "error opening file")
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 
 	content, err := io.ReadAll(f)
 	if err != nil {

@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 )
 
 var rootCmd = &cobra.Command{
@@ -13,7 +14,11 @@ var rootCmd = &cobra.Command{
 	Long:  "A Command Line Interface (CLI) tool for performing MPC recovery operations using cryptographic primitives.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default action for the root command
-		cmd.Help()
+		err := cmd.Help()
+		if err != nil {
+			cmd.PrintErrln(err)
+			os.Exit(1)
+		}
 	},
 }
 

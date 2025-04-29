@@ -4,17 +4,17 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/palisadeinc/mpc-recovery/models"
 	"github.com/palisadeinc/mpc-recovery/utils"
 	"github.com/spf13/cobra"
 	"gitlab.com/sepior/go-tsm-sdkv2/tsm"
-	"strings"
 )
 
 const flagRecoveryKitPath = "recovery-kit-file"
@@ -185,35 +185,4 @@ func init() {
 		flagQuorumID,
 		flagKeyID,
 	)
-}
-
-// ASN.1 structures needed for parsing PKIX public key
-type publicKeyInfo struct {
-	Algorithm algorithmIdentifier
-	PublicKey asn1.BitString
-}
-
-type algorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters asn1.ObjectIdentifier
-}
-
-func convertExternalToInternal(derBytes []byte) ([]byte, error) {
-	// Parse the DER-encoded SubjectPublicKeyInfo structure
-	var pubKeyInfo publicKeyInfo
-	if _, err := asn1.Unmarshal(derBytes, &pubKeyInfo); err != nil {
-		return nil, fmt.Errorf("error parsing ASN.1 structure: %w", err)
-	}
-
-	// For secp256k1, the BitString should contain the raw key data
-	// with a leading byte '04' (uncompressed point format),
-	// followed by the X and Y coordinates (32 bytes each)
-	rawKeyBytes := pubKeyInfo.PublicKey.Bytes
-
-	// Verify that we have the expected format (04 + 64 bytes)
-	if len(rawKeyBytes) != 65 || rawKeyBytes[0] != 0x04 {
-		return nil, fmt.Errorf("unexpected public key format, not an uncompressed EC point")
-	}
-
-	return rawKeyBytes, nil
 }

@@ -5,8 +5,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/hex"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 const flagPrivateKeyFile = "private-key-file"
@@ -57,7 +58,11 @@ var generateRecoveryKeypairCmd = &cobra.Command{
 			cmd.PrintErrln("Error creating private key file:", err)
 			return
 		}
-		defer privateKeyFile.Close()
+		defer func() {
+			if err := privateKeyFile.Close(); err != nil {
+				cmd.PrintErrln("Error closing private key file:", err)
+			}
+		}()
 
 		if _, err := privateKeyFile.WriteString(privateKeyHex); err != nil {
 			cmd.PrintErrln("Error writing private key to file:", err)
@@ -70,7 +75,11 @@ var generateRecoveryKeypairCmd = &cobra.Command{
 			cmd.PrintErrln("Error creating public key file:", err)
 			return
 		}
-		defer publicKeyFile.Close()
+		defer func() {
+			if err := publicKeyFile.Close(); err != nil {
+				cmd.PrintErrln("Error closing public key file:", err)
+			}
+		}()
 
 		if _, err := publicKeyFile.WriteString(publicKeyHex); err != nil {
 			cmd.PrintErrln("Error writing public key to file:", err)

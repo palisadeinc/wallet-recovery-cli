@@ -11,8 +11,6 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	gitlab.com/sepior/go-tsm-sdkv2 v0.0.0-20240201124516-cdcef25d2903
-	golang.org/x/crypto v0.32.0
-	golang.org/x/sync v0.10.0
 )
 
 require (
@@ -36,6 +34,8 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
