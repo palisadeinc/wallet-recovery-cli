@@ -60,7 +60,7 @@ jobs:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
+        goos: [linux, darwin]
         goarch: [amd64, arm64]
 
     steps:
