@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/palisadeinc/mpc-recovery/cmd/decrypt"
+	"github.com/palisadeinc/mpc-recovery/cmd/generate"
+	"github.com/palisadeinc/mpc-recovery/cmd/print_address"
+	"github.com/palisadeinc/mpc-recovery/cmd/recover"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +36,8 @@ func Execute() {
 func init() {
 	viper.SetDefault("license", "apache")
 
-	//rootCmd.AddCommand(genRecoveryKeysCmd)
-	rootCmd.AddCommand(recoverCmd)
-	rootCmd.AddCommand(generateRecoveryKeypairCmd)
+	rootCmd.AddCommand(recover.Cmd)
+	rootCmd.AddCommand(generate.Cmd)
+	rootCmd.AddCommand(decrypt.Cmd)
+	rootCmd.AddCommand(print_address.Cmd)
 }

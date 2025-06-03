@@ -24,12 +24,22 @@ github.com/consensys/gnark-crypto/field/pool
 github.com/consensys/gnark-crypto/internal/generator/config
 github.com/consensys/gnark-crypto/internal/parallel
 github.com/consensys/gnark-crypto/utils/cpu
-# github.com/davecgh/go-spew v1.1.1
-## explicit
-github.com/davecgh/go-spew/spew
 # github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 ## explicit; go 1.17
 github.com/decred/dcrd/dcrec/secp256k1/v4
+github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
+# github.com/ethereum/go-ethereum v1.15.11
+## explicit; go 1.23.0
+github.com/ethereum/go-ethereum/common
+github.com/ethereum/go-ethereum/common/hexutil
+github.com/ethereum/go-ethereum/common/math
+github.com/ethereum/go-ethereum/crypto
+github.com/ethereum/go-ethereum/crypto/secp256k1
+github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/include
+github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/src
+github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/src/modules/recovery
+github.com/ethereum/go-ethereum/rlp
+github.com/ethereum/go-ethereum/rlp/internal/rlpstruct
 # github.com/fsnotify/fsnotify v1.9.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
@@ -41,6 +51,12 @@ github.com/go-viper/mapstructure/v2/internal/errors
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
+# github.com/gorilla/mux v1.8.1
+## explicit; go 1.20
+github.com/gorilla/mux
+# github.com/holiman/uint256 v1.3.2
+## explicit; go 1.19
+github.com/holiman/uint256
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
@@ -78,9 +94,6 @@ github.com/pelletier/go-toml/v2/unstable
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/pmezard/go-difflib v1.0.0
-## explicit
-github.com/pmezard/go-difflib/difflib
 # github.com/sagikazarmark/locafero v0.9.0
 ## explicit; go 1.23.0
 github.com/sagikazarmark/locafero
@@ -112,32 +125,34 @@ github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
-# github.com/stretchr/testify v1.10.0
-## explicit; go 1.17
-github.com/stretchr/testify/assert
-github.com/stretchr/testify/assert/yaml
-github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# gitlab.com/sepior/go-tsm-sdkv2 v0.0.0-20240201124516-cdcef25d2903 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
-## explicit; go 1.21
-gitlab.com/sepior/go-tsm-sdkv2/ec
-gitlab.com/sepior/go-tsm-sdkv2/ec/internal/curve448
-gitlab.com/sepior/go-tsm-sdkv2/internal/caching
-gitlab.com/sepior/go-tsm-sdkv2/internal/crypto/bip340
-gitlab.com/sepior/go-tsm-sdkv2/internal/crypto/bls
-gitlab.com/sepior/go-tsm-sdkv2/internal/crypto/ecdsa
-gitlab.com/sepior/go-tsm-sdkv2/internal/crypto/ed448
-gitlab.com/sepior/go-tsm-sdkv2/internal/derivekeys
-gitlab.com/sepior/go-tsm-sdkv2/internal/ers
-gitlab.com/sepior/go-tsm-sdkv2/internal/partialresults/partialsignature
-gitlab.com/sepior/go-tsm-sdkv2/internal/pki
-gitlab.com/sepior/go-tsm-sdkv2/internal/polynomial
-gitlab.com/sepior/go-tsm-sdkv2/internal/random
-gitlab.com/sepior/go-tsm-sdkv2/internal/secretshare
-gitlab.com/sepior/go-tsm-sdkv2/internal/transport
-gitlab.com/sepior/go-tsm-sdkv2/tsm
+# gitlab.com/Blockdaemon/go-tsm-sdkv2/v69 v69.0.0
+## explicit; go 1.22.0
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/bch
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/bits
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/caching
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/combination
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/crypto/bip340
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/crypto/bls
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/crypto/ecdsa
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/crypto/ed448
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/derivekeys
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/ec
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/ec/internal/curve448
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/ers
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/ocsp
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/partialresults/partialrsa
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/partialresults/partialsignature
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/partialresults/partialsymmetric
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/pki
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/polynomial
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/random
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/secretshare
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/transport
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/internal/version
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v69/tsm
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -147,6 +162,7 @@ golang.org/x/crypto/blake2b
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
 golang.org/x/crypto/hkdf
+golang.org/x/crypto/ocsp
 golang.org/x/crypto/sha3
 # golang.org/x/sync v0.13.0
 ## explicit; go 1.23.0
@@ -154,8 +170,12 @@ golang.org/x/sync/errgroup
 # golang.org/x/sys v0.32.0
 ## explicit; go 1.23.0
 golang.org/x/sys/cpu
+golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# golang.org/x/term v0.31.0
+## explicit; go 1.23.0
+golang.org/x/term
 # golang.org/x/text v0.24.0
 ## explicit; go 1.23.0
 golang.org/x/text/encoding

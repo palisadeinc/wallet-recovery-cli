@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func OpenFile(filepath string) ([]byte, error) {
+func OpenReadOnlyFile(filepath string) ([]byte, error) {
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		return nil, errors.WithMessage(err, "file does not exist")
 	}
@@ -29,4 +29,23 @@ func OpenFile(filepath string) ([]byte, error) {
 	}
 
 	return content, nil
+}
+
+func WriteToFile(filepath string, content []byte) error {
+	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return errors.WithMessage(err, "error opening file")
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}()
+
+	_, err = f.Write(content)
+	if err != nil {
+		return errors.WithMessage(err, "error writing to file")
+	}
+
+	return nil
 }
