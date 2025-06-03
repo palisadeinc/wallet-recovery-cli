@@ -71,6 +71,9 @@ var Cmd = &cobra.Command{
 func init() {
 	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing encrypted private key. Must exist and be readable.")
 	Cmd.Flags().Bool(flagEncrypted, false, "Whether the private key file is encrypted.")
-	Cmd.MarkFlagRequired(flagPrivateKeyFile)
+	if err := Cmd.MarkFlagRequired(flagPrivateKeyFile); err != nil {
+		Cmd.PrintErrln("Error marking private key file as required:", err)
+		return
+	}
 	Cmd.MarkFlagsRequiredTogether(flagPrivateKeyFile)
 }
