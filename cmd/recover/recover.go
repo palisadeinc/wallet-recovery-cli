@@ -23,6 +23,7 @@ const flagRecoveryKitPath = "recovery-kit-file"
 const flagPrivateKeyPath = "private-key-file"
 const flagQuorumID = "quorum-id"
 const flagKeyID = "key-id"
+const flagKeyType = "key-type"
 
 var Cmd = &cobra.Command{
 	Use:   "recover",
@@ -161,21 +162,75 @@ var Cmd = &cobra.Command{
 
 		defer utils.ClearSensitiveBytes(rootWalletKeyPkix)
 
-		privateKeyBytes, err = utils.RecoverPrivateKey(recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey)
+		// Check key type flag
+		keyType, err := cmd.Flags().GetString(flagKeyType)
 		if err != nil {
-			cmd.PrintErrln("Error recovering private key:", err)
+			cmd.PrintErrln("Error retrieving key type:", err)
 			return
 		}
 
-		defer utils.ClearSensitiveBytes(privateKeyBytes)
-
-		ethereumAddress, err := utils.GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes)
-		if err != nil {
-			cmd.PrintErrln("Error getting Ethereum address:", err)
-			return
+		// Default to SECP256K1 if not specified (for backward compatibility)
+		if keyType == "" {
+			keyType = string(models.KeyAlgorithmSECP256K1)
 		}
 
-		cmd.Printf("Ethereum address: %s\n", ethereumAddress)
+		// Check if recovery kit specifies key algorithm
+		if recoveryKit.KeyAlgorithm != "" {
+			// If both are specified, they must match
+			if keyType != string(recoveryKit.KeyAlgorithm) {
+				cmd.PrintErrln(
+					"Key type mismatch: flag specifies", keyType, "but recovery kit specifies",
+					recoveryKit.KeyAlgorithm,
+				)
+				return
+			}
+			keyType = string(recoveryKit.KeyAlgorithm)
+		}
+
+		// Recover private key based on key type
+		switch models.KeyAlgorithm(keyType) {
+		case models.KeyAlgorithmSECP256K1:
+			privateKeyBytes, err = utils.RecoverECDSAPrivateKey(
+				recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
+			)
+			if err != nil {
+				cmd.PrintErrln("Error recovering SECP256K1 private key:", err)
+				return
+			}
+
+			defer utils.ClearSensitiveBytes(privateKeyBytes)
+
+			ethereumAddress, err := utils.GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes)
+			if err != nil {
+				cmd.PrintErrln("Error getting Ethereum address:", err)
+				return
+			}
+
+			cmd.Printf("Ethereum address: %s\n", ethereumAddress)
+
+		case models.KeyAlgorithmED25519:
+			privateKeyBytes, err = utils.RecoverED25519PrivateKey(
+				recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
+			)
+			if err != nil {
+				cmd.PrintErrln("Error recovering ED25519 private key:", err)
+				return
+			}
+
+			defer utils.ClearSensitiveBytes(privateKeyBytes)
+
+			solanaAddress, err := utils.GetSolanaAddressFromPrivateKeyBytes(privateKeyBytes)
+			if err != nil {
+				cmd.PrintErrln("Error getting Solana address:", err)
+				return
+			}
+
+			cmd.Printf("Solana address: %s\n", solanaAddress)
+
+		default:
+			cmd.PrintErrln("Unsupported key type:", keyType)
+			return
+		}
 
 		fileOutput := cmd.Flags().Changed(flagOutputFile)
 		if fileOutput {
@@ -257,6 +312,9 @@ func init() {
 	Cmd.Flags().String(flagPrivateKeyPath, "", "File path to hex formatted, DER encoded RSA-4096 bit private key")
 	Cmd.Flags().String(flagQuorumID, "", "Quorum ID")
 	Cmd.Flags().String(flagKeyID, "", "Key ID")
+
+	// Optional flag for key type
+	Cmd.Flags().String(flagKeyType, "", "Key algorithm type: SECP256K1 (default) or ED25519")
 
 	if err := Cmd.MarkFlagRequired(flagRecoveryKitPath); err != nil {
 		Cmd.PrintErrln("Error marking recovery kit path as required:", err)
