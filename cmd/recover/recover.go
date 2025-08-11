@@ -200,13 +200,20 @@ var Cmd = &cobra.Command{
 
 			defer utils.ClearSensitiveBytes(privateKeyBytes)
 
+			// Display both Ethereum and XRP addresses for SECP256K1 keys
 			ethereumAddress, err := utils.GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes)
 			if err != nil {
 				cmd.PrintErrln("Error getting Ethereum address:", err)
 				return
 			}
-
 			cmd.Printf("Ethereum address: %s\n", ethereumAddress)
+
+			xrpAddress, err := utils.GetXRPAddressFromPrivateKeyBytes(privateKeyBytes)
+			if err != nil {
+				cmd.PrintErrln("Error getting XRP address:", err)
+				return
+			}
+			cmd.Printf("XRP address: %s\n", xrpAddress)
 
 		case models.KeyAlgorithmED25519:
 			privateKeyBytes, err = utils.RecoverED25519PrivateKey(
