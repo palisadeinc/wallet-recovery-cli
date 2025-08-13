@@ -35,14 +35,22 @@ func TestRecoverED25519PrivateKey(t *testing.T) {
 	t.Logf("ERS Label: %x", ersLabel)
 
 	// Test GetSolanaAddressFromPrivateKeyBytes
-	testPrivateKey := make([]byte, 32)
-	if _, err := rand.Read(testPrivateKey); err != nil {
-		t.Fatalf("Failed to generate test private key: %v", err)
+	// Use a known valid ED25519 scalar for testing
+	// This is the same test key used in crypto_test.go
+	testPrivateKeyHex := "044c2e76de7699aac908b2a60756a550f5acc3fca8a9204ed0475dc0b0a30acb"
+	testPrivateKey, err := hex.DecodeString(testPrivateKeyHex)
+	if err != nil {
+		t.Fatalf("Failed to decode test private key: %v", err)
 	}
 
 	solanaAddress, err := GetSolanaAddressFromPrivateKeyBytes(testPrivateKey)
 	if err != nil {
 		t.Fatalf("Failed to get Solana address: %v", err)
+	}
+
+	expectedAddress := "CnBUF6yJJvuN7kkjCdPhVKXzCvX8nkMNK32VotpAX19E"
+	if solanaAddress != expectedAddress {
+		t.Errorf("Solana address mismatch: got %s, expected %s", solanaAddress, expectedAddress)
 	}
 
 	t.Logf("Generated Solana address: %s", solanaAddress)

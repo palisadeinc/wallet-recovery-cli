@@ -111,27 +111,10 @@ func RecoverED25519PrivateKey(
 ) ([]byte, error) {
 	ersLabel := sha256.Sum256([]byte(fmt.Sprintf("%s-%s", quorumID, keyID)))
 	
-	fmt.Printf("DEBUG: ED25519 Recovery\n")
-	fmt.Printf("  QuorumID: %s\n", quorumID)
-	fmt.Printf("  KeyID: %s\n", keyID)
-	fmt.Printf("  ERS Label: %x\n", ersLabel)
-	fmt.Printf("  Recovery data length: %d\n", len(recoveryDataBytes))
-	fmt.Printf("  Root public key length: %d\n", len(rootWalletKeyPkix))
-	fmt.Printf("  Root public key (hex): %x\n", rootWalletKeyPkix)
-	
 	// Convert PKIX public key to JSON format for TSM SDK v70
 	jsonPublicKey, err := convertPKIXToJSON(rootWalletKeyPkix, "ED25519")
 	if err != nil {
 		return nil, errors.WithMessage(err, "error converting public key to JSON format")
-	}
-	
-	fmt.Printf("  JSON public key: %s\n", string(jsonPublicKey))
-	
-	// Decode recovery data to check structure
-	var recoveryStruct map[string]interface{}
-	if err := json.Unmarshal(recoveryDataBytes, &recoveryStruct); err == nil {
-		fmt.Printf("  Recovery data structure: version=%v, has recovery_data=%v\n", 
-			recoveryStruct["version"], recoveryStruct["recovery_data"] != nil)
 	}
 	
 	if err := tsm.SchnorrValidateRecoveryData(
@@ -140,29 +123,9 @@ func RecoverED25519PrivateKey(
 		return nil, errors.WithMessage(err, "error validating ED25519 recovery data")
 	}
 
-	fmt.Printf("  Validation passed\n")
-
 	masterPrivateKey, err := tsm.SchnorrRecoverPrivateKey(recoveryDataBytes, ersRSAPrivateKey, ersLabel[:])
 	if err != nil {
 		return nil, errors.WithMessage(err, "error recovering ED25519 private key")
-	}
-
-	fmt.Printf("  Recovered master private key length: %d\n", len(masterPrivateKey.PrivateKey))
-	fmt.Printf("  Master chain code length: %d\n", len(masterPrivateKey.MasterChainCode))
-	fmt.Printf("  Private key (hex): %x\n", masterPrivateKey.PrivateKey)
-	fmt.Printf("  Master chain code (hex): %x\n", masterPrivateKey.MasterChainCode)
-	
-	// Check if the key is all zeros
-	allZeros := true
-	for _, b := range masterPrivateKey.PrivateKey {
-		if b != 0 {
-			allZeros = false
-			break
-		}
-	}
-	if allZeros {
-		fmt.Printf("  WARNING: Master private key is all zeros!\n")
-		fmt.Printf("  This means the TSM SDK returned zeros from SchnorrRecoverPrivateKey\n")
 	}
 
 	// Make a copy of the private key before clearing the original
@@ -172,12 +135,7 @@ func RecoverED25519PrivateKey(
 	defer ClearSensitiveBytes(masterPrivateKey.PrivateKey)
 	defer ClearSensitiveBytes(masterPrivateKey.MasterChainCode)
 
-	// For ED25519/Solana, when BIP32 is disabled in TSM nodes:
-	// - CloudSign now uses nil derivation path to get master key (matching Ethereum)
-	// - Wallets use master keys directly (no derivation)
-	// - Recovery data is for master key
-	// This makes Solana work the same as Ethereum
-	
-	// Return the copy of the master key (no derivation needed)
+	// TSM returns ED25519 keys as raw scalars in big-endian format, not RFC-8032 seeds
+	// The crypto functions will handle the proper conversion for use with standard libraries
 	return privateKeyCopy, nil
 }
