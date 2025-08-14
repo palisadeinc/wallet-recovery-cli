@@ -1,14 +1,15 @@
 # MPC Recovery Tool
 
-A command-line interface (CLI) tool for performing MPC (Multi-Party Computation) recovery operations using cryptographic primitives. This tool helps recover ECDSA private keys using recovery data and RSA keypairs.
+A command-line interface (CLI) tool for performing MPC (Multi-Party Computation) recovery operations using cryptographic primitives. This tool helps recover both ECDSA (SECP256K1) and ED25519 private keys using recovery data and RSA keypairs.
 
 ## Overview
 
 This tool provides functionality for:
 - Generating RSA keypairs for MPC recovery purposes
-- Recovering ECDSA private keys using recovery data, RSA private keys, and other required parameters
+- Recovering ECDSA (SECP256K1) private keys for Ethereum/EVM chains
+- Recovering ED25519 private keys for Solana
 - Decrypting encrypted private key files generated during the recovery process
-- Printing the EVM-compatible blockchain address associated with a recovered private key
+- Printing blockchain addresses (Ethereum for SECP256K1, Solana for ED25519)
 
 ## Installation
 
@@ -41,14 +42,24 @@ The resulting content of the file specified in the `--public-key-file` flag can 
 
 ### Recover Private Key
 
-Recover an ECDSA private key from recovery data:
+Recover a private key from recovery data (supports both ECDSA/SECP256K1 and ED25519):
 
 ```bash
+# For ECDSA/SECP256K1 (Ethereum) - default
 ./recovery recover \
   --recovery-kit-file=recovery-kit.b64 \
   --private-key-file=private.der \
   --quorum-id=<UUID> \
   --key-id=<UUID> \
+  --output-file=recovered.enc    # Optional – save to file instead of stdout
+
+# For ED25519 (Solana)
+./recovery recover \
+  --recovery-kit-file=recovery-kit.b64 \
+  --private-key-file=private.der \
+  --quorum-id=<UUID> \
+  --key-id=<UUID> \
+  --key-type=ED25519 \
   --output-file=recovered.enc    # Optional – save to file instead of stdout
 ```
 
@@ -59,15 +70,18 @@ Required flags:
 - `--key-id`: UUID of the key
 
 Optional flags:
+- `--key-type`: Key algorithm type: SECP256K1 (default) or ED25519
 - `--output-file`: Path where the recovered private key should be written. If omitted, the key is printed to stdout.
 - `--encrypt-output`: Whether to AES-256 encrypt the output file (default `true`). When enabled you will be prompted for a password.
 
 The recovery operation performs the following steps:
 1. Reads and parses the recovery kit file and the RSA private key file.
 2. Validates that the public key derived from the provided RSA private key matches the public key stored within the recovery data.
-3. Validates the integrity of the recovery data itself using cryptographic checks involving the ERS public key and the wallet's root public key.
-4. If both validations pass, it recovers the ECDSA private key using the recovery data and the provided RSA private key.
-5. The recovered ECDSA private key is printed to standard output in base64 format.
+3. Determines the key type (from flag or recovery kit metadata).
+4. Validates the integrity of the recovery data using the appropriate algorithm (ECDSA for SECP256K1, Schnorr for ED25519).
+5. If validations pass, recovers the private key using the recovery data and the provided RSA private key.
+6. Displays the corresponding blockchain address (Ethereum for SECP256K1, Solana for ED25519).
+7. The recovered private key is printed to standard output in base64 format or saved to file.
 
 ### Decrypt Encrypted Private Key File
 
@@ -101,7 +115,9 @@ Required flags:
 Optional flags:
 - `--encrypted`: Set to `true` if the private key file is encrypted (default `false`).
 
-The command prints the corresponding EVM-compatible address to standard output.
+The command prints the corresponding blockchain address to standard output:
+- For SECP256K1 keys: EVM-compatible Ethereum address
+- For ED25519 keys: Solana address (hex-encoded public key)
 
 ## Security Considerations
 
