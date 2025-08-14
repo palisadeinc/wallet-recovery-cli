@@ -11,6 +11,7 @@ import (
 
 	"filippo.io/edwards25519"
 	"github.com/ethereum/go-ethereum/crypto"
+	//nolint:staticcheck // RIPEMD-160 is required by XRP protocol for address generation
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -47,7 +48,7 @@ func GetSolanaAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error)
 
 	// Solana addresses are base58 encoded public keys
 	address := base58.Encode(publicKey)
-	
+
 	return address, nil
 }
 
