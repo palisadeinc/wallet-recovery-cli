@@ -10,29 +10,30 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	golang.org/x/crypto v0.41.0
-	golang.org/x/term v0.34.0
+	github.com/stretchr/testify v1.11.1
+	golang.org/x/crypto v0.42.0
+	golang.org/x/term v0.35.0
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0
 	github.com/bits-and-blooms/bitset v1.22.0 // indirect
-	github.com/consensys/bavard v0.1.30 // indirect
-	github.com/consensys/gnark-crypto v0.17.0 // indirect
+	github.com/consensys/gnark-crypto v0.18.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.15.11
+	github.com/ethereum/go-ethereum v1.16.3
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -42,9 +43,8 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.1.0
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	rsc.io/tmplfunc v0.0.3 // indirect
 )

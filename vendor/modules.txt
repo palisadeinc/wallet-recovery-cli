@@ -5,30 +5,28 @@ filippo.io/edwards25519/field
 # github.com/bits-and-blooms/bitset v1.22.0
 ## explicit; go 1.16
 github.com/bits-and-blooms/bitset
-# github.com/consensys/bavard v0.1.30
-## explicit; go 1.22
-github.com/consensys/bavard
-# github.com/consensys/gnark-crypto v0.17.0
-## explicit; go 1.22
+# github.com/consensys/gnark-crypto v0.18.0
+## explicit; go 1.23.0
 github.com/consensys/gnark-crypto/ecc
 github.com/consensys/gnark-crypto/ecc/bls12-381
 github.com/consensys/gnark-crypto/ecc/bls12-381/fp
 github.com/consensys/gnark-crypto/ecc/bls12-381/fr
+github.com/consensys/gnark-crypto/ecc/bls12-381/hash_to_curve
 github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower
 github.com/consensys/gnark-crypto/field/asm/element_4w
 github.com/consensys/gnark-crypto/field/asm/element_6w
-github.com/consensys/gnark-crypto/field/generator/config
-github.com/consensys/gnark-crypto/field/generator/internal/addchain
 github.com/consensys/gnark-crypto/field/hash
 github.com/consensys/gnark-crypto/field/pool
-github.com/consensys/gnark-crypto/internal/generator/config
 github.com/consensys/gnark-crypto/internal/parallel
 github.com/consensys/gnark-crypto/utils/cpu
+# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+## explicit
+github.com/davecgh/go-spew/spew
 # github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 ## explicit; go 1.17
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
-# github.com/ethereum/go-ethereum v1.15.11
+# github.com/ethereum/go-ethereum v1.16.3
 ## explicit; go 1.23.0
 github.com/ethereum/go-ethereum/common
 github.com/ethereum/go-ethereum/common/hexutil
@@ -72,30 +70,6 @@ github.com/inconshreveable/mousetrap
 # github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b
 ## explicit; go 1.17
 github.com/mimoo/StrobeGo/strobe
-# github.com/mmcloughlin/addchain v0.4.0
-## explicit; go 1.16
-github.com/mmcloughlin/addchain
-github.com/mmcloughlin/addchain/acc
-github.com/mmcloughlin/addchain/acc/ast
-github.com/mmcloughlin/addchain/acc/ir
-github.com/mmcloughlin/addchain/acc/parse
-github.com/mmcloughlin/addchain/acc/parse/internal/parser
-github.com/mmcloughlin/addchain/acc/pass
-github.com/mmcloughlin/addchain/acc/printer
-github.com/mmcloughlin/addchain/alg
-github.com/mmcloughlin/addchain/alg/contfrac
-github.com/mmcloughlin/addchain/alg/dict
-github.com/mmcloughlin/addchain/alg/ensemble
-github.com/mmcloughlin/addchain/alg/exec
-github.com/mmcloughlin/addchain/alg/heuristic
-github.com/mmcloughlin/addchain/alg/opt
-github.com/mmcloughlin/addchain/internal/bigint
-github.com/mmcloughlin/addchain/internal/bigints
-github.com/mmcloughlin/addchain/internal/bigvector
-github.com/mmcloughlin/addchain/internal/container/heap
-github.com/mmcloughlin/addchain/internal/errutil
-github.com/mmcloughlin/addchain/internal/print
-github.com/mmcloughlin/addchain/meta
 # github.com/mr-tron/base58 v1.2.0
 ## explicit; go 1.12
 github.com/mr-tron/base58
@@ -109,6 +83,9 @@ github.com/pelletier/go-toml/v2/unstable
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
+## explicit
+github.com/pmezard/go-difflib/difflib
 # github.com/sagikazarmark/locafero v0.9.0
 ## explicit; go 1.23.0
 github.com/sagikazarmark/locafero
@@ -140,6 +117,12 @@ github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
+# github.com/stretchr/testify v1.11.1
+## explicit; go 1.17
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
+github.com/stretchr/testify/require
+github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
@@ -177,8 +160,8 @@ gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/tsm
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/crypto v0.41.0
-## explicit; go 1.23.0
+# golang.org/x/crypto v0.42.0
+## explicit; go 1.24.0
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
@@ -186,20 +169,20 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/ripemd160
 golang.org/x/crypto/sha3
-# golang.org/x/sync v0.16.0
-## explicit; go 1.23.0
+# golang.org/x/sync v0.17.0
+## explicit; go 1.24.0
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.35.0
-## explicit; go 1.23.0
+# golang.org/x/sys v0.36.0
+## explicit; go 1.24.0
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.34.0
-## explicit; go 1.23.0
+# golang.org/x/term v0.35.0
+## explicit; go 1.24.0
 golang.org/x/term
-# golang.org/x/text v0.28.0
-## explicit; go 1.23.0
+# golang.org/x/text v0.29.0
+## explicit; go 1.24.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
@@ -211,8 +194,4 @@ golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# rsc.io/tmplfunc v0.0.3
-## explicit; go 1.17
-rsc.io/tmplfunc
-rsc.io/tmplfunc/internal/parse
 # gitlab.com/sepior/go-tsm-sdkv2 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
