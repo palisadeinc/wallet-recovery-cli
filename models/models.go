@@ -8,10 +8,9 @@ const (
 )
 
 type RecoveryDataObject struct {
-	Index                         uint         `json:"index"`
-	RecoveryPublicKeyHex          string       `json:"recoveryPublicKeyHex"`
-	PartialRecoveryDataBase64     string       `json:"partialRecoveryDataHex"`
-	WalletRootPublicKeyPkixBase64 string       `json:"walletRootPublicKeyPkixBase64"`
-	WalletPublicKeyBase64         string       `json:"walletPublicKeyBase64"`
-	KeyAlgorithm                  KeyAlgorithm `json:"keyAlgorithm,omitempty"` // Optional field for backward compatibility
+	Index                         uint   `json:"index"`
+	RecoveryPublicKeyHex          string `json:"recoveryPublicKeyHex"`
+	PartialRecoveryDataBase64     string `json:"partialRecoveryDataHex"`
+	WalletRootPublicKeyPkixBase64 string `json:"walletRootPublicKeyPkixBase64"`
+	WalletPublicKeyBase64         string `json:"walletPublicKeyBase64"`
 }
