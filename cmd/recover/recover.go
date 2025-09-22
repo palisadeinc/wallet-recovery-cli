@@ -177,32 +177,44 @@ var Cmd = &cobra.Command{
 		// Recover private key based on key type
 		switch models.KeyAlgorithm(keyType) {
 		case models.KeyAlgorithmSECP256K1:
-			privateKeyBytes, err = utils.RecoverECDSAPrivateKey(
-				recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
-			)
-			if err != nil {
-				cmd.PrintErrln("Error recovering SECP256K1 private key:", err)
+			if recoveryKit.MpcAlgorithm == "" || recoveryKit.MpcAlgorithm == models.MPCAlgorithmDKLS19 {
+				privateKeyBytes, err = utils.RecoverECDSAPrivateKey(
+					recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
+				)
+				if err != nil {
+					cmd.PrintErrln("Error recovering SECP256K1 private key:", err)
+					return
+				}
+
+				defer utils.ClearSensitiveBytes(privateKeyBytes)
+
+				// Display both Ethereum and XRP addresses for SECP256K1 keys
+				ethereumAddress, err := utils.GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes)
+				if err != nil {
+					cmd.PrintErrln("Error getting Ethereum address:", err)
+					return
+				}
+				cmd.Printf("Ethereum address: %s\n", ethereumAddress)
+
+				xrpAddress, err := utils.GetXRPAddressFromPrivateKeyBytes(privateKeyBytes)
+				if err != nil {
+					cmd.PrintErrln("Error getting XRP address:", err)
+					return
+				}
+				cmd.Printf("XRP address: %s\n", xrpAddress)
+			} else {
+				// private key recovery is unavailable for PDKLS23 algorithm
+				cmd.PrintErrln("Private key recovery is unavailable for pdkls23 MPC algorithm")
 				return
 			}
-
-			defer utils.ClearSensitiveBytes(privateKeyBytes)
-
-			// Display both Ethereum and XRP addresses for SECP256K1 keys
-			ethereumAddress, err := utils.GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes)
-			if err != nil {
-				cmd.PrintErrln("Error getting Ethereum address:", err)
-				return
-			}
-			cmd.Printf("Ethereum address: %s\n", ethereumAddress)
-
-			xrpAddress, err := utils.GetXRPAddressFromPrivateKeyBytes(privateKeyBytes)
-			if err != nil {
-				cmd.PrintErrln("Error getting XRP address:", err)
-				return
-			}
-			cmd.Printf("XRP address: %s\n", xrpAddress)
 
 		case models.KeyAlgorithmED25519:
+			// guard to make sure MPC algorithm is not set for ED25519 keys
+			if recoveryKit.MpcAlgorithm != "" {
+				cmd.PrintErrf("MPC algorithm '%s' is invalid for ED25519 key type\n", recoveryKit.MpcAlgorithm)
+				return
+			}
+
 			privateKeyBytes, err = utils.RecoverED25519PrivateKey(
 				recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
 			)
