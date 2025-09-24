@@ -174,6 +174,19 @@ var Cmd = &cobra.Command{
 			keyType = string(models.KeyAlgorithmSECP256K1)
 		}
 
+		// Check if recovery kit specifies key algorithm
+		if recoveryKit.KeyType != nil {
+			// If both are specified, they must match
+			if keyType != string(*recoveryKit.KeyType) {
+				cmd.PrintErrln(
+					"Key type mismatch: flag specifies", keyType, "but recovery kit specifies",
+					recoveryKit.KeyType,
+				)
+				return
+			}
+			keyType = string(*recoveryKit.KeyType)
+		}
+
 		// Recover private key based on key type
 		switch models.KeyAlgorithm(keyType) {
 		case models.KeyAlgorithmSECP256K1:
