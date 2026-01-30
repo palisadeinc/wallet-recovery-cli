@@ -61,12 +61,39 @@ var Cmd = &cobra.Command{
 
 		defer utils.ClearSensitiveBytes(privateKeyBytes)
 
-		privateKeyHex := string(privateKeyBytes)
-		// Remove all whitespace characters
-		privateKeyHex = strings.ReplaceAll(privateKeyHex, "\n", "")
-		privateKeyHex = strings.ReplaceAll(privateKeyHex, "\r", "")
-		privateKeyHex = strings.ReplaceAll(privateKeyHex, " ", "")
-		privateKeyHex = strings.ReplaceAll(privateKeyHex, "\t", "")
+		var privateKeyHex string
+
+		// Auto-detect encrypted private key by checking for magic header
+		if utils.HasEncryptionHeader(privateKeyBytes) {
+			cmd.Println("Encrypted private key detected.")
+			cmd.Print("Enter password to decrypt private key: ")
+			passwordBytes, err := term.ReadPassword(syscall.Stdin)
+			if err != nil {
+				cmd.PrintErrln("\nError reading password:", err)
+				return
+			}
+			cmd.Println()
+
+			decryptedBytes, err := utils.DecryptWithHeader(passwordBytes, privateKeyBytes)
+			// passwordBytes is cleared by DecryptWithHeader
+			if err != nil {
+				cmd.PrintErrln("Error decrypting private key: incorrect password or corrupted file")
+				return
+			}
+
+			// Clear original encrypted bytes now that we have decrypted
+			utils.ClearSensitiveBytes(privateKeyBytes)
+
+			privateKeyHex = string(decryptedBytes)
+			defer utils.ClearSensitiveBytes(decryptedBytes)
+		} else {
+			privateKeyHex = string(privateKeyBytes)
+			// Remove all whitespace characters
+			privateKeyHex = strings.ReplaceAll(privateKeyHex, "\n", "")
+			privateKeyHex = strings.ReplaceAll(privateKeyHex, "\r", "")
+			privateKeyHex = strings.ReplaceAll(privateKeyHex, " ", "")
+			privateKeyHex = strings.ReplaceAll(privateKeyHex, "\t", "")
+		}
 
 		privateKeyDerBytes, err := hex.DecodeString(privateKeyHex)
 		if err != nil {
@@ -316,7 +343,7 @@ var Cmd = &cobra.Command{
 func init() {
 	// Required flags
 	Cmd.Flags().String(flagRecoveryKitPath, "", "Local file path to the recovery data file from S3")
-	Cmd.Flags().String(flagPrivateKeyPath, "", "File path to hex formatted, DER encoded RSA-4096 bit private key")
+	Cmd.Flags().String(flagPrivateKeyPath, "", "File path to RSA-4096 bit private key (hex-encoded DER or encrypted with --encrypt-private-key)")
 	Cmd.Flags().String(flagQuorumID, "", "Quorum ID")
 	Cmd.Flags().String(flagKeyID, "", "Key ID")
 

@@ -8,6 +8,7 @@ import (
 	"github.com/palisadeinc/mpc-recovery/cmd/generate"
 	"github.com/palisadeinc/mpc-recovery/cmd/print_address"
 	"github.com/palisadeinc/mpc-recovery/cmd/recover"
+	"github.com/palisadeinc/mpc-recovery/cmd/validate_key"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,4 +41,5 @@ func init() {
 	rootCmd.AddCommand(generate.Cmd)
 	rootCmd.AddCommand(decrypt.Cmd)
 	rootCmd.AddCommand(print_address.Cmd)
+	rootCmd.AddCommand(validate_key.Cmd)
 }

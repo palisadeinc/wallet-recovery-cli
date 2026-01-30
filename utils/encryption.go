@@ -14,6 +14,11 @@ const (
 	pbkdf2Iterations = 3_000_000
 	pbkdf2KeyLength  = 32
 	saltSize         = 16
+
+	// MagicHeaderSize is the size of the magic header for encrypted files
+	MagicHeaderSize = 4
+	// MagicHeaderRSAKey is the magic header for encrypted RSA private keys
+	MagicHeaderRSAKey = "PKE1"
 )
 
 var hashingFunc = sha512.New
@@ -124,4 +129,39 @@ func ClearSensitiveBytes(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
+}
+
+// HasEncryptionHeader checks if the data starts with the magic header for encrypted RSA keys
+func HasEncryptionHeader(data []byte) bool {
+	if len(data) < MagicHeaderSize {
+		return false
+	}
+	return string(data[:MagicHeaderSize]) == MagicHeaderRSAKey
+}
+
+// EncryptWithHeader encrypts content using AES-256-GCM and prepends a magic header.
+// Format: [4 bytes header "PKE1"] + [16 bytes salt] + [12 bytes nonce] + [ciphertext + auth tag]
+func EncryptWithHeader(passwordBytes []byte, contentBytes []byte) ([]byte, error) {
+	encryptedData, err := EncryptData(passwordBytes, contentBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepend magic header
+	result := make([]byte, MagicHeaderSize+len(encryptedData))
+	copy(result[:MagicHeaderSize], MagicHeaderRSAKey)
+	copy(result[MagicHeaderSize:], encryptedData)
+
+	return result, nil
+}
+
+// DecryptWithHeader validates the magic header and decrypts the content.
+// Returns error if header is missing/invalid or decryption fails.
+func DecryptWithHeader(passwordBytes []byte, encryptedData []byte) ([]byte, error) {
+	if !HasEncryptionHeader(encryptedData) {
+		return nil, errors.New("invalid encrypted file: missing or invalid header")
+	}
+
+	// Strip header and decrypt
+	return DecryptData(passwordBytes, encryptedData[MagicHeaderSize:])
 }
