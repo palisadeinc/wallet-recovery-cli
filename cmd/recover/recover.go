@@ -343,7 +343,7 @@ var Cmd = &cobra.Command{
 func init() {
 	// Required flags
 	Cmd.Flags().String(flagRecoveryKitPath, "", "Local file path to the recovery data file from S3")
-	Cmd.Flags().String(flagPrivateKeyPath, "", "File path to hex formatted, DER encoded RSA-4096 bit private key")
+	Cmd.Flags().String(flagPrivateKeyPath, "", "File path to RSA-4096 bit private key (hex-encoded DER or encrypted with --encrypt-private-key)")
 	Cmd.Flags().String(flagQuorumID, "", "Quorum ID")
 	Cmd.Flags().String(flagKeyID, "", "Key ID")
 

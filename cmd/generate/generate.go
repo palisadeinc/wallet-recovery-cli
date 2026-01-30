@@ -18,6 +18,7 @@ import (
 const flagPrivateKeyFile = "private-key-file"
 const flagPublicKeyFile = "public-key-file"
 const flagEncryptPrivateKey = "encrypt-private-key"
+const minPasswordLength = 8
 
 var Cmd = &cobra.Command{
 	Use:   "generate-recovery-keypair",
@@ -53,6 +54,12 @@ var Cmd = &cobra.Command{
 				return
 			}
 			fmt.Fprintln(cmd.OutOrStdout())
+
+			if len(passwordBytes) < minPasswordLength {
+				utils.ClearSensitiveBytes(passwordBytes)
+				cmd.PrintErrf("Password must be at least %d characters\n", minPasswordLength)
+				return
+			}
 
 			fmt.Fprint(cmd.OutOrStdout(), "Confirm password: ")
 			confirmPasswordBytes, err := term.ReadPassword(syscall.Stdin)
@@ -146,6 +153,11 @@ var Cmd = &cobra.Command{
 			return
 		}
 
+		if encryptPrivateKey {
+			cmd.Println("Recovery keypair generated successfully. Private key is encrypted.")
+		} else {
+			cmd.Println("Recovery keypair generated successfully.")
+		}
 	},
 }
 
