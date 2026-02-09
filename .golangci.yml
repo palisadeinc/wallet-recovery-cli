@@ -1,0 +1,161 @@
+version: "2"
+run:
+  concurrency: 8
+  go: ""
+  build-tags:
+    - integration
+  modules-download-mode: readonly
+  issues-exit-code: 1
+  tests: true
+  allow-parallel-runners: false
+output:
+  path-prefix: ""
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - sqlclosecheck
+    - staticcheck
+    - tagliatelle
+    - testableexamples
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+  disable:
+    - containedctx
+    - cyclop
+    - decorder
+    - depguard
+    - dogsled
+    - dupl
+    - dupword
+    - errchkjson
+    - exhaustive
+    - exhaustruct
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocyclo
+    - godox
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - grouper
+    - importas
+    - interfacebloat
+    - ireturn
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - musttag
+    - nestif
+    - nlreturn
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wrapcheck
+    - wsl
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+      exclude-functions:
+        - io/ioutil.ReadFile
+        - io.Copy(*bytes.Buffer)
+        - io.Copy(os.Stdout)
+    gocritic:
+      disabled-checks:
+        - hugeParam
+        - rangeExprCopy
+        - rangeValCopy
+        - unnamedResult
+        - commentedOutCode
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gosec:
+      excludes:
+        - G115
+    govet:
+      disable:
+        - fieldalignment
+    nakedret:
+      max-func-lines: 1
+    staticcheck:
+      checks:
+        - '-ST1003:'
+    tagliatelle:
+      case:
+        rules:
+          avro: snake
+          bson: camel
+          json: camel
+          mapstructure: kebab
+          xml: camel
+          yaml: snake
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: 'var-naming: don''t use an underscore in package name'
+      - path: (.+)\.go$
+        text: 'var-naming: don''t use ALL_CAPS in Go names; use CamelCase'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false
+  new: false
+  fix: true
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

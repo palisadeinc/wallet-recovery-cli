@@ -17,4 +17,3 @@ updates:
           - "*"
     rebase-strategy: "auto"
     open-pull-requests-limit: 5
-

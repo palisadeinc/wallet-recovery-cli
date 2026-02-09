@@ -1,15 +1,16 @@
-module github.com/palisadeinc/mpc-recovery
+module github.com/palisadeinc/wallet-recovery-cli
 
 go 1.24.2
 
 replace gitlab.com/sepior/go-tsm-sdkv2 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
 
 require (
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/mr-tron/base58 v1.2.0
-	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
+	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.41.0
 	golang.org/x/term v0.34.0
 )
@@ -21,6 +22,8 @@ require (
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
+	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
 )
 
 require (

@@ -1,4 +1,8 @@
-# MPC Recovery Tool
+# Wallet Recovery CLI
+
+[![Build Status](https://github.com/palisadeinc/wallet-recovery-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/palisadeinc/wallet-recovery-cli/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/palisadeinc/wallet-recovery-cli)](https://goreportcard.com/report/github.com/palisadeinc/wallet-recovery-cli)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 A command-line interface (CLI) tool for performing MPC (Multi-Party Computation) recovery operations using cryptographic primitives. This tool helps recover both ECDSA (SECP256K1) and ED25519 private keys using recovery data and RSA keypairs.
 
@@ -13,10 +17,22 @@ This tool provides functionality for:
 
 ## Installation
 
+### Using Go Install
+
+```bash
+go install github.com/palisadeinc/wallet-recovery-cli@latest
+```
+
+### Download Binary from Releases
+
+Visit the [Releases](https://github.com/palisadeinc/wallet-recovery-cli/releases) page to download pre-built binaries for your platform.
+
+### Build from Source
+
 ```bash
 # Clone the repository
-git clone https://github.com/palisadeinc/mpc-recovery.git
-cd mpc-recovery
+git clone https://github.com/palisadeinc/wallet-recovery-cli.git
+cd wallet-recovery-cli
 
 # Build the binary
 go build -o recovery
@@ -130,6 +146,50 @@ The command prints the corresponding blockchain address to standard output:
 - [Cobra](https://github.com/spf13/cobra) - CLI command structure
 - [Viper](https://github.com/spf13/viper) - Configuration management
 
+## Troubleshooting
+
+### File Permission Errors
+
+**Issue**: `permission denied` when reading or writing files
+
+**Solution**:
+- Ensure you have read permissions for input files: `chmod 644 <file>`
+- Ensure the directory where you're writing output files is writable: `chmod 755 <directory>`
+- For private key files, the tool automatically sets restrictive permissions (0400) after creation
+
+### Invalid Key Format Errors
+
+**Issue**: `invalid key format` or `failed to parse key`
+
+**Solution**:
+- Verify the private key file is in hex-encoded DER format (PKCS#1 or PKCS#8)
+- Ensure the recovery kit file is valid base64-encoded JSON
+- Check that you're using the correct key file for the recovery operation
+- Verify the key file hasn't been corrupted or modified
+
+### Password Mismatch Errors
+
+**Issue**: `password mismatch` or `decryption failed` when decrypting files
+
+**Solution**:
+- Ensure you're entering the correct password used during encryption
+- Note that passwords are case-sensitive
+- If you've forgotten the password, the encrypted file cannot be recovered
+- For the `decrypt` command, make sure you're using the same password that was set during the `recover` command with `--encrypt-output=true`
+
+## Export Compliance
+
+This software contains cryptographic functionality and may be subject to export controls.
+
+This software uses:
+- RSA-4096 for asymmetric encryption
+- AES-256-GCM for symmetric encryption
+- ECDSA (SECP256K1) and ED25519 for digital signatures
+
+Users are responsible for ensuring compliance with applicable export control laws and regulations in their jurisdiction. This software is classified under ECCN 5D002 for U.S. Export Administration Regulations (EAR).
+
+For more information, see the [U.S. Bureau of Industry and Security](https://www.bis.doc.gov/).
+
 ## License
 
-Apache License (as specified in configuration) 
+Apache License (as specified in configuration)

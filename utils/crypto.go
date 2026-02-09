@@ -1,3 +1,6 @@
+// Copyright 2024 Palisade
+// SPDX-License-Identifier: Apache-2.0
+
 package utils
 
 import (
@@ -6,19 +9,20 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/mr-tron/base58"
 	"math/big"
+
+	"github.com/mr-tron/base58"
 
 	"filippo.io/edwards25519"
 	"github.com/ethereum/go-ethereum/crypto"
-	//nolint:staticcheck // RIPEMD-160 is required by XRP protocol for address generation
+
 	"golang.org/x/crypto/ripemd160"
 )
 
 func GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	pkey, err := crypto.HexToECDSA(hex.EncodeToString(privateKeyBytes))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to convert private key to ECDSA: %w", err)
 	}
 	return crypto.PubkeyToAddress(pkey.PublicKey).Hex(), nil
 }
@@ -39,7 +43,7 @@ func GetSolanaAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error)
 	// Create scalar from the little-endian bytes
 	scalar, err := edwards25519.NewScalar().SetCanonicalBytes(littleEndianKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to create scalar from private key: %v", err)
+		return "", fmt.Errorf("failed to create scalar from private key: %w", err)
 	}
 
 	// Public key is g^{privateKey} where g is the Ed25519 base point
@@ -89,7 +93,9 @@ func GetXRPAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	checksum := checksum2[:4]
 
 	// 5. Append checksum to payload
-	addressBytes := append(payload, checksum...)
+	addressBytes := make([]byte, len(payload)+len(checksum))
+	copy(addressBytes, payload)
+	copy(addressBytes[len(payload):], checksum)
 
 	// 6. Base58 encode
 	// XRP uses a custom alphabet: "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"

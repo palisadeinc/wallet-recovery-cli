@@ -1,3 +1,6 @@
+// Copyright 2024 Palisade
+// SPDX-License-Identifier: Apache-2.0
+
 package utils
 
 import (
@@ -6,8 +9,7 @@ import (
 	"crypto/pbkdf2"
 	"crypto/rand"
 	"crypto/sha512"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 const (
@@ -23,13 +25,13 @@ const (
 
 var hashingFunc = sha512.New
 
-func EncryptData(passwordBytes []byte, contentBytes []byte) ([]byte, error) {
+func EncryptData(passwordBytes, contentBytes []byte) ([]byte, error) {
 	if passwordBytes == nil {
-		return nil, errors.New("password bytes cannot be nil")
+		return nil, fmt.Errorf("password bytes cannot be nil")
 	}
 
 	if contentBytes == nil {
-		return nil, errors.New("content bytes cannot be nil")
+		return nil, fmt.Errorf("content bytes cannot be nil")
 	}
 
 	defer ClearSensitiveBytes(passwordBytes)
@@ -37,31 +39,31 @@ func EncryptData(passwordBytes []byte, contentBytes []byte) ([]byte, error) {
 	// Generate a random salt for key derivation
 	salt := make([]byte, saltSize)
 	if _, err := rand.Read(salt); err != nil {
-		return nil, errors.WithMessage(err, "Error generating salt")
+		return nil, fmt.Errorf("failed to generate salt: %w", err)
 	}
 
 	// Derive encryption key using PBKDF2
 	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, pbkdf2Iterations, pbkdf2KeyLength)
 	if err != nil {
-		return nil, errors.WithMessage(err, "Error deriving encryption key")
+		return nil, fmt.Errorf("failed to derive encryption key: %w", err)
 	}
 	defer ClearSensitiveBytes(key)
 
 	// Create AES-256-GCM cipher
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, errors.WithMessage(err, "Error creating cipher")
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, errors.WithMessage(err, "Error creating GCM")
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
 	// Generate random nonce
 	nonce := make([]byte, aesgcm.NonceSize())
 	if _, err := rand.Read(nonce); err != nil {
-		return nil, errors.WithMessage(err, "Error generating nonce")
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
 	}
 
 	// Encrypt the content
@@ -76,16 +78,16 @@ func EncryptData(passwordBytes []byte, contentBytes []byte) ([]byte, error) {
 	return encryptedData, nil
 }
 
-func DecryptData(passwordBytes []byte, encryptedData []byte) ([]byte, error) {
+func DecryptData(passwordBytes, encryptedData []byte) ([]byte, error) {
 	if passwordBytes == nil {
-		return nil, errors.New("password bytes cannot be nil")
+		return nil, fmt.Errorf("password bytes cannot be nil")
 	}
 
 	defer ClearSensitiveBytes(passwordBytes)
 
 	// Extract salt (first saltSize bytes)
 	if len(encryptedData) < saltSize {
-		return nil, errors.New("encrypted data too short: missing salt")
+		return nil, fmt.Errorf("encrypted data too short: missing salt")
 	}
 	salt := encryptedData[:saltSize]
 	encryptedData = encryptedData[saltSize:]
@@ -93,25 +95,25 @@ func DecryptData(passwordBytes []byte, encryptedData []byte) ([]byte, error) {
 	// Derive encryption key using PBKDF2 with same parameters as encryption
 	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, pbkdf2Iterations, pbkdf2KeyLength)
 	if err != nil {
-		return nil, errors.WithMessage(err, "error deriving decryption key")
+		return nil, fmt.Errorf("error deriving decryption key: %w", err)
 	}
 	defer ClearSensitiveBytes(key)
 
 	// Create AES-256-GCM cipher
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, errors.WithMessage(err, "error creating cipher")
+		return nil, fmt.Errorf("error creating cipher: %w", err)
 	}
 
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, errors.WithMessage(err, "error creating GCM")
+		return nil, fmt.Errorf("error creating GCM: %w", err)
 	}
 
 	// Extract nonce
 	nonceSize := aesgcm.NonceSize()
 	if len(encryptedData) < nonceSize {
-		return nil, errors.New("encrypted data too short: missing nonce")
+		return nil, fmt.Errorf("encrypted data too short: missing nonce")
 	}
 	nonce := encryptedData[:nonceSize]
 	ciphertext := encryptedData[nonceSize:]
@@ -119,7 +121,7 @@ func DecryptData(passwordBytes []byte, encryptedData []byte) ([]byte, error) {
 	// Decrypt the content
 	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return nil, errors.WithMessage(err, "error decrypting data")
+		return nil, fmt.Errorf("error decrypting data: %w", err)
 	}
 
 	return plaintext, nil
@@ -141,7 +143,7 @@ func HasEncryptionHeader(data []byte) bool {
 
 // EncryptWithHeader encrypts content using AES-256-GCM and prepends a magic header.
 // Format: [4 bytes header "PKE1"] + [16 bytes salt] + [12 bytes nonce] + [ciphertext + auth tag]
-func EncryptWithHeader(passwordBytes []byte, contentBytes []byte) ([]byte, error) {
+func EncryptWithHeader(passwordBytes, contentBytes []byte) ([]byte, error) {
 	encryptedData, err := EncryptData(passwordBytes, contentBytes)
 	if err != nil {
 		return nil, err
@@ -157,9 +159,9 @@ func EncryptWithHeader(passwordBytes []byte, contentBytes []byte) ([]byte, error
 
 // DecryptWithHeader validates the magic header and decrypts the content.
 // Returns error if header is missing/invalid or decryption fails.
-func DecryptWithHeader(passwordBytes []byte, encryptedData []byte) ([]byte, error) {
+func DecryptWithHeader(passwordBytes, encryptedData []byte) ([]byte, error) {
 	if !HasEncryptionHeader(encryptedData) {
-		return nil, errors.New("invalid encrypted file: missing or invalid header")
+		return nil, fmt.Errorf("invalid encrypted file: missing or invalid header")
 	}
 
 	// Strip header and decrypt

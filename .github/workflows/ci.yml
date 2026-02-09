@@ -34,8 +34,13 @@ jobs:
         with:
           go-version: "1.24.12"
           cache: true
-      - name: Run tests
-        run: go test -race -vet=off ./...
+      - name: Run tests with coverage
+        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.out
+          fail_ci_if_error: false
 
   vulnerability-check:
     name: Vulnerability Check
@@ -52,16 +57,30 @@ jobs:
       - name: Run govulncheck
         run: govulncheck ./...
 
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
   build:
     name: Build Binaries (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-22.04
-    needs: [lint, test, vulnerability-check]
+    needs: [lint, test, vulnerability-check, secrets-scan]
     # Only run on push to main or on release creation
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
     strategy:
       matrix:
-        goos: [linux, darwin]
+        goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -138,3 +157,57 @@ jobs:
           asset_path: ${{ env.BINARY_PATH }}
           asset_name: ${{ env.BINARY_NAME }}
           asset_content_type: application/octet-stream
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-22.04
+    needs: [lint, test, vulnerability-check, secrets-scan]
+    # Only run on push to main or on release creation
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Generate SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: Upload SBOM Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            sbom.spdx.json
+            sbom.cyclonedx.json
+          if-no-files-found: error
+
+      - name: Attach SBOM to Release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: sbom.spdx.json
+          asset_name: sbom.spdx.json
+          asset_content_type: application/json
+
+      - name: Attach CycloneDX SBOM to Release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: sbom.cyclonedx.json
+          asset_name: sbom.cyclonedx.json
+          asset_content_type: application/json

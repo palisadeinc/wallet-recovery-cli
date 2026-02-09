@@ -1,0 +1,50 @@
+# Pre-commit hooks for Wallet Recovery CLI
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.6.1
+    hooks:
+      - id: golangci-lint
+        args: ['--fix']
+
+  - repo: local
+    hooks:
+      - id: go-mod-tidy
+        name: go mod tidy
+        entry: go mod tidy
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      - id: go-generate
+        name: go generate
+        entry: go generate ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      - id: gofumpt
+        name: gofumpt
+        entry: gofumpt -w
+        language: system
+        types: [go]
+
+      - id: go-test
+        name: go test
+        entry: go test ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+
