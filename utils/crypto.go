@@ -16,7 +16,7 @@ import (
 	"filippo.io/edwards25519"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"golang.org/x/crypto/ripemd160"
+	"golang.org/x/crypto/ripemd160" //nolint:gosec // Required for Bitcoin/XRP address derivation per BIP-0013
 )
 
 func GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
@@ -80,7 +80,7 @@ func GetXRPAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	sha256Hash := sha256.Sum256(pubKeyBytes)
 
 	// 2. RIPEMD-160 hash of the SHA-256 hash
-	ripemd := ripemd160.New()
+	ripemd := ripemd160.New() //nolint:gosec // Required for XRP address derivation per XRPL spec
 	ripemd.Write(sha256Hash[:])
 	accountID := ripemd.Sum(nil)
 

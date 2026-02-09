@@ -1,7 +1,7 @@
 // Copyright 2024 Palisade
 // SPDX-License-Identifier: Apache-2.0
 
-package recover
+package recover //nolint:predeclared // Package name matches command name; imported with alias to avoid shadowing
 
 import (
 	"bytes"
