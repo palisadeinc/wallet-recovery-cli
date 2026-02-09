@@ -51,6 +51,11 @@ func TestGenerateCommandFlags(t *testing.T) {
 			flagName: flagEncryptPrivateKey,
 			wantType: "bool",
 		},
+		{
+			name:     "format flag exists",
+			flagName: flagFormat,
+			wantType: "string",
+		},
 	}
 
 	for _, tt := range tests {
@@ -88,6 +93,11 @@ func TestGenerateCommandFlagDefaults(t *testing.T) {
 			name:        "encrypt-private-key default is false",
 			flagName:    flagEncryptPrivateKey,
 			wantDefault: "false",
+		},
+		{
+			name:        "format default is der",
+			flagName:    flagFormat,
+			wantDefault: formatDER,
 		},
 	}
 
@@ -155,6 +165,38 @@ func TestFlagConstants(t *testing.T) {
 			name:     "flagEncryptPrivateKey constant",
 			constant: flagEncryptPrivateKey,
 			want:     "encrypt-private-key",
+		},
+		{
+			name:     "flagFormat constant",
+			constant: flagFormat,
+			want:     "format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.constant != tt.want {
+				t.Errorf("Constant = %q, want %q", tt.constant, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatConstants(t *testing.T) {
+	tests := []struct {
+		name     string
+		constant string
+		want     string
+	}{
+		{
+			name:     "formatDER constant",
+			constant: formatDER,
+			want:     "der",
+		},
+		{
+			name:     "formatHex constant",
+			constant: formatHex,
+			want:     "hex",
 		},
 	}
 
@@ -294,6 +336,10 @@ func TestGenerateCommandDescription(t *testing.T) {
 		"PRIVATE key is kept secure",
 		"PKIX DER format",
 		"password encryption",
+		"--format=der",
+		"--format=hex",
+		"binary DER",
+		"hex-encoded",
 	}
 
 	for _, phrase := range keyPhrases {

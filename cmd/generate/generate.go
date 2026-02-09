@@ -22,7 +22,12 @@ const (
 	flagPrivateKeyFile    = "private-key-file"
 	flagPublicKeyFile     = "public-key-file"
 	flagEncryptPrivateKey = "encrypt-private-key"
+	flagFormat            = "format"
 	minPasswordLength     = 8
+
+	// Output format options
+	formatDER = "der" // Binary DER (industry standard)
+	formatHex = "hex" // Hex-encoded DER (legacy)
 )
 
 var Cmd = &cobra.Command{
@@ -34,9 +39,14 @@ This command creates a new RSA-4096 key pair used in the MPC recovery process:
 - The PUBLIC key is uploaded to Palisade for encrypting wallet backups
 - The PRIVATE key is kept secure by you for recovering wallet keys
 
-The key pair is output in PKIX DER format (hex-encoded). The public key should be
-uploaded through the Palisade Customer Portal or API. The private key can optionally
-be encrypted with a password for additional security.
+The public key is output in PKIX DER format. By default, the output is binary DER
+(industry standard). Use --format=hex for hex-encoded output (legacy format).
+The public key should be uploaded through the Palisade Customer Portal or API.
+The private key can optionally be encrypted with a password for additional security.
+
+Output Formats:
+  --format=der  Binary DER format (default, industry standard, ~550 bytes)
+  --format=hex  Hex-encoded DER format (legacy, ~1100 characters)
 
 Usage Flow:
   1. Generate the keypair (optionally with password encryption)
@@ -45,10 +55,16 @@ Usage Flow:
   4. Use the private key with the 'recover' command to recover wallet keys
 
 Examples:
-  # Generate a key pair with default output files
+  # Generate a key pair with binary DER output (default)
   recovery generate-recovery-keypair \
     --private-key-file=private.der \
     --public-key-file=public.der
+
+  # Generate with hex-encoded output (legacy format)
+  recovery generate-recovery-keypair \
+    --private-key-file=private.der \
+    --public-key-file=public.hex \
+    --format=hex
 
   # Generate with password-encrypted private key
   recovery generate-recovery-keypair \
@@ -98,6 +114,18 @@ Security Notes:
 		if err != nil {
 			cmd.PrintErrln("Error retrieving encrypt private key flag:", err)
 			return fmt.Errorf("failed to retrieve encrypt private key flag: %w", err)
+		}
+
+		outputFormat, err := cmd.Flags().GetString(flagFormat)
+		if err != nil {
+			cmd.PrintErrln("Error retrieving format flag:", err)
+			return fmt.Errorf("failed to retrieve format flag: %w", err)
+		}
+
+		// Validate format
+		if outputFormat != formatDER && outputFormat != formatHex {
+			cmd.PrintErrf("Invalid format %q: must be 'der' or 'hex'\n", outputFormat)
+			return fmt.Errorf("invalid format %q: must be 'der' or 'hex'", outputFormat)
 		}
 
 		// Collect password BEFORE key generation to fail fast and minimize sensitive data lifetime
@@ -204,15 +232,26 @@ Security Notes:
 			}
 		}()
 
-		if _, err := publicKeyFile.WriteString(publicKeyHex); err != nil {
-			cmd.PrintErrln("Error writing public key to file:", err)
-			return fmt.Errorf("failed to write public key to file: %w", err)
+		// Write public key in the requested format
+		switch outputFormat {
+		case formatDER:
+			// Binary DER format (industry standard)
+			if _, err := publicKeyFile.Write(publicKeyDER); err != nil {
+				cmd.PrintErrln("Error writing public key to file:", err)
+				return fmt.Errorf("failed to write public key to file: %w", err)
+			}
+		case formatHex:
+			// Hex-encoded DER format (legacy)
+			if _, err := publicKeyFile.WriteString(publicKeyHex); err != nil {
+				cmd.PrintErrln("Error writing public key to file:", err)
+				return fmt.Errorf("failed to write public key to file: %w", err)
+			}
 		}
 
 		if encryptPrivateKey {
-			cmd.Println("Recovery keypair generated successfully. Private key is encrypted.")
+			cmd.Printf("Recovery keypair generated successfully (public key format: %s). Private key is encrypted.\n", outputFormat)
 		} else {
-			cmd.Println("Recovery keypair generated successfully.")
+			cmd.Printf("Recovery keypair generated successfully (public key format: %s).\n", outputFormat)
 		}
 		return nil
 	},
@@ -222,5 +261,6 @@ func init() {
 	Cmd.Flags().String(flagPrivateKeyFile, "", "File path to save the private key. Must not exist.")
 	Cmd.Flags().String(flagPublicKeyFile, "", "File path to save the public key. Must not exist.")
 	Cmd.Flags().Bool(flagEncryptPrivateKey, false, "Encrypt the private key with a password")
+	Cmd.Flags().String(flagFormat, formatDER, "Output format for public key: 'der' (binary, default) or 'hex' (hex-encoded)")
 	Cmd.MarkFlagsRequiredTogether(flagPrivateKeyFile, flagPublicKeyFile)
 }

@@ -25,7 +25,7 @@ Generate an RSA-4096 key pair for wallet backup and recovery.
 
 **Synopsis**
 ```
-recovery generate-recovery-keypair --private-key-file=<path> --public-key-file=<path> [--encrypt-private-key]
+recovery generate-recovery-keypair --private-key-file=<path> --public-key-file=<path> [--format=<der|hex>] [--encrypt-private-key]
 ```
 
 **Description**
@@ -34,7 +34,14 @@ Creates a new RSA-4096 key pair used in the MPC recovery process:
 - The PUBLIC key is uploaded to Palisade for encrypting wallet backups
 - The PRIVATE key is kept secure by you for recovering wallet keys
 
-The key pair is output in PKIX DER format (hex-encoded). The public key should be uploaded through the Palisade Customer Portal or API. The private key can optionally be encrypted with a password for additional security.
+The public key is output in PKIX DER format. By default, the output is binary DER (industry standard). Use `--format=hex` for hex-encoded output (legacy format). The public key should be uploaded through the Palisade Customer Portal or API. The private key can optionally be encrypted with a password for additional security.
+
+**Output Formats**
+
+| Format | Description | File Size | Use Case |
+|--------|-------------|-----------|----------|
+| `der` (default) | Binary DER format | ~550 bytes | Industry standard, compatible with OpenSSL |
+| `hex` | Hex-encoded DER | ~1100 characters | Legacy format, text-based |
 
 **Flags**
 
@@ -42,15 +49,22 @@ The key pair is output in PKIX DER format (hex-encoded). The public key should b
 |------|------|---------|----------|-------------|
 | `--private-key-file` | string | - | Yes | File path to save the private key. Must not exist. |
 | `--public-key-file` | string | - | Yes | File path to save the public key. Must not exist. |
+| `--format` | string | `der` | No | Output format for public key: `der` (binary) or `hex` (hex-encoded) |
 | `--encrypt-private-key` | boolean | false | No | Encrypt the private key with a password |
 
 **Examples**
 
 ```bash
-# Generate a key pair with default output files
+# Generate a key pair with binary DER output (default)
 recovery generate-recovery-keypair \
   --private-key-file=private.der \
   --public-key-file=public.der
+
+# Generate with hex-encoded output (legacy format)
+recovery generate-recovery-keypair \
+  --private-key-file=private.der \
+  --public-key-file=public.hex \
+  --format=hex
 
 # Generate with password-encrypted private key
 recovery generate-recovery-keypair \

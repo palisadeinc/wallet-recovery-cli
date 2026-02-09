@@ -45,16 +45,22 @@ go build -o recovery
 Generate an RSA 4096-bit keypair for MPC recovery:
 
 ```bash
+# Generate with binary DER output (default, industry standard)
 ./recovery generate-recovery-keypair --private-key-file=private.der --public-key-file=public.der
+
+# Generate with hex-encoded output (legacy format)
+./recovery generate-recovery-keypair --private-key-file=private.der --public-key-file=public.hex --format=hex
 ```
 
 Required flags:
 - `--private-key-file`: Path where the private key will be saved (file must not exist)
 - `--public-key-file`: Path where the public key will be saved (file must not exist)
 
-The keys are saved in hex-encoded DER format.
+Optional flags:
+- `--format`: Output format for public key: `der` (binary, default) or `hex` (hex-encoded)
+- `--encrypt-private-key`: Encrypt the private key with a password
 
-The resulting content of the file specified in the `--public-key-file` flag can be used as a backup recovery key in the Palisade console.
+The public key file can be uploaded as a backup recovery key in the Palisade console. Both binary DER and hex-encoded formats are accepted.
 
 ### Recover Private Key
 
