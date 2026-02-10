@@ -84,6 +84,10 @@ Security Notes:
 		}
 
 		var contentBytes []byte
+		defer func() {
+			utils.ClearSensitiveBytes(contentBytes)
+		}()
+
 		encrypted, err := cmd.Flags().GetBool(flagEncrypted)
 		if err != nil {
 			cmd.PrintErrln("Error retrieving encrypted flag:", err)
@@ -97,6 +101,7 @@ Security Notes:
 				cmd.PrintErrln("Error reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)
 			}
+			defer utils.ClearSensitiveBytes(passwordBytes)
 			cmd.Println()
 
 			encryptedPrivateKeyFileBytes, err := utils.OpenReadOnlyFile(privateKeyFilePath)
@@ -104,6 +109,7 @@ Security Notes:
 				cmd.PrintErrln("Error opening encrypted private key file:", err)
 				return fmt.Errorf("failed to open encrypted private key file: %w", err)
 			}
+			defer utils.ClearSensitiveBytes(encryptedPrivateKeyFileBytes)
 
 			contentBytes, err = utils.DecryptData(passwordBytes, encryptedPrivateKeyFileBytes)
 			if err != nil {
@@ -113,28 +119,36 @@ Security Notes:
 		} else {
 			contentBytes, err = utils.OpenReadOnlyFile(privateKeyFilePath)
 			if err != nil {
-				cmd.PrintErrln("Error opening encrypted private key file:", err)
+				cmd.PrintErrln("Error opening private key file:", err)
 				return fmt.Errorf("failed to open private key file: %w", err)
 			}
 		}
 
+		// Try to derive Ethereum address first (SECP256K1 keys)
 		address, err := utils.GetEthereumAddressFromPrivateKeyBytes(contentBytes)
-		if err != nil {
-			cmd.PrintErrln("Error getting Ethereum address from private key bytes:", err)
-			return fmt.Errorf("failed to get ethereum address from private key bytes: %w", err)
+		if err == nil {
+			cmd.Println("EVM-compatible address:", address)
+			return nil
 		}
 
-		cmd.Println("EVM-compatible address:", address)
-		return nil
+		// If Ethereum derivation fails, try Solana (ED25519 keys)
+		solanaAddress, solanaErr := utils.GetSolanaAddressFromPrivateKeyBytes(contentBytes)
+		if solanaErr == nil {
+			cmd.Println("Solana address:", solanaAddress)
+			return nil
+		}
+
+		// Both failed - report the original Ethereum error as it's more common
+		cmd.PrintErrln("Error deriving address from private key bytes:", err)
+		return fmt.Errorf("failed to derive address from private key bytes (tried Ethereum and Solana): %w", err)
 	},
 }
 
 func init() {
-	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing encrypted private key. Must exist and be readable.")
+	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing private key. Must exist and be readable.")
 	Cmd.Flags().Bool(flagEncrypted, false, "Whether the private key file is encrypted.")
 	if err := Cmd.MarkFlagRequired(flagPrivateKeyFile); err != nil {
 		Cmd.PrintErrln("Error marking private key file as required:", err)
 		return
 	}
-	Cmd.MarkFlagsRequiredTogether(flagPrivateKeyFile)
 }
