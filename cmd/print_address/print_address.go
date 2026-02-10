@@ -12,10 +12,7 @@ import (
 	"golang.org/x/term"
 )
 
-const (
-	flagPrivateKeyFile = "private-key-file"
-	flagEncrypted      = "encrypted"
-)
+const flagPrivateKeyFile = "private-key-file"
 
 var Cmd = &cobra.Command{
 	Use:   "print-address",
@@ -27,8 +24,9 @@ corresponding blockchain address. It supports multiple key types and chains:
   - SECP256K1 keys: Derives EVM-compatible Ethereum addresses
   - ED25519 keys: Derives Solana addresses
 
-The command automatically detects the key type from the private key content and
-displays the appropriate address format.
+The command automatically detects:
+  - Whether the file is encrypted (by checking for the PKE1 header)
+  - The key type from the private key content
 
 Supported Chains:
   - Ethereum and EVM-compatible chains (SECP256K1)
@@ -38,18 +36,12 @@ Examples:
   # Print address from plain-text private key
   recovery print-address --private-key-file=recovered_key.der
 
-  # Print address from encrypted private key
-  recovery print-address \
-    --private-key-file=recovered_key.enc \
-    --encrypted
+  # Print address from encrypted private key (auto-detected)
+  recovery print-address --private-key-file=recovered_key.enc
+  # You will be prompted for the password
 
   # Print address from a recovery keypair
   recovery print-address --private-key-file=private.der
-
-  # Print address from encrypted recovery keypair
-  recovery print-address \
-    --private-key-file=private.der.enc \
-    --encrypted
 
   # Verify address matches your wallet
   recovery print-address --private-key-file=recovered_key.der
@@ -57,7 +49,7 @@ Examples:
 
 Workflow:
   1. Run the command with your private key file
-  2. If encrypted, you will be prompted for the password
+  2. If the file is encrypted (auto-detected), you will be prompted for the password
   3. The command derives the public key from the private key
   4. The corresponding blockchain address is printed to stdout
   5. Verify the address matches your expected wallet address
@@ -83,45 +75,40 @@ Security Notes:
 			return fmt.Errorf("invalid private key file path: %w", err)
 		}
 
+		// Read the file first to check for encryption header
+		fileBytes, err := utils.OpenReadOnlyFile(privateKeyFilePath)
+		if err != nil {
+			cmd.PrintErrln("Error reading private key file:", err)
+			return fmt.Errorf("failed to read private key file: %w", err)
+		}
+		defer utils.ClearSensitiveBytes(fileBytes)
+
 		var contentBytes []byte
 		defer func() {
 			utils.ClearSensitiveBytes(contentBytes)
 		}()
 
-		encrypted, err := cmd.Flags().GetBool(flagEncrypted)
-		if err != nil {
-			cmd.PrintErrln("Error retrieving encrypted flag:", err)
-			return fmt.Errorf("failed to retrieve encrypted flag: %w", err)
-		}
-
-		if encrypted {
-			cmd.Print("Enter encryption password: ")
+		// Auto-detect encryption by checking for PKE1 header
+		if utils.HasEncryptionHeader(fileBytes) {
+			cmd.Println("Encrypted private key detected.")
+			cmd.Print("Enter password to decrypt private key: ")
 			passwordBytes, err := term.ReadPassword(syscall.Stdin)
 			if err != nil {
-				cmd.PrintErrln("Error reading password:", err)
+				cmd.PrintErrln("\nError reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)
 			}
-			defer utils.ClearSensitiveBytes(passwordBytes)
 			cmd.Println()
 
-			encryptedPrivateKeyFileBytes, err := utils.OpenReadOnlyFile(privateKeyFilePath)
+			contentBytes, err = utils.DecryptWithHeader(passwordBytes, fileBytes)
+			// passwordBytes is cleared by DecryptWithHeader
 			if err != nil {
-				cmd.PrintErrln("Error opening encrypted private key file:", err)
-				return fmt.Errorf("failed to open encrypted private key file: %w", err)
-			}
-			defer utils.ClearSensitiveBytes(encryptedPrivateKeyFileBytes)
-
-			contentBytes, err = utils.DecryptData(passwordBytes, encryptedPrivateKeyFileBytes)
-			if err != nil {
-				cmd.PrintErrln("Error decrypting private key file:", err)
+				cmd.PrintErrln("Error decrypting private key: incorrect password or corrupted file")
 				return fmt.Errorf("failed to decrypt private key file: %w", err)
 			}
 		} else {
-			contentBytes, err = utils.OpenReadOnlyFile(privateKeyFilePath)
-			if err != nil {
-				cmd.PrintErrln("Error opening private key file:", err)
-				return fmt.Errorf("failed to open private key file: %w", err)
-			}
+			// Not encrypted - use file bytes directly
+			contentBytes = make([]byte, len(fileBytes))
+			copy(contentBytes, fileBytes)
 		}
 
 		// Try to derive Ethereum address first (SECP256K1 keys)
@@ -145,8 +132,7 @@ Security Notes:
 }
 
 func init() {
-	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing private key. Must exist and be readable.")
-	Cmd.Flags().Bool(flagEncrypted, false, "Whether the private key file is encrypted.")
+	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing private key (encrypted or plain). Must exist and be readable.")
 	if err := Cmd.MarkFlagRequired(flagPrivateKeyFile); err != nil {
 		Cmd.PrintErrln("Error marking private key file as required:", err)
 		return
