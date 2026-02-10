@@ -1,4 +1,4 @@
-name: Go CI
+name: CI
 
 on:
   push:
@@ -6,57 +6,63 @@ on:
   pull_request:
     branches: ["main"]
   release:
-    types: [created] # Trigger on release creation
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  # Pre-commit checks - mirrors local pre-commit workflow
+  pre-commit:
+    name: Pre-commit Checks
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.12"
-          cache: false
+          go-version: "1.24"
+          cache: true
+
+      - name: Install tools
+        run: |
+          go install mvdan.cc/gofumpt@latest
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || (echo "go.mod/go.sum not tidy - run 'go mod tidy'" && exit 1)
+
+      - name: Verify generated code is up to date
+        run: |
+          go generate ./...
+          git diff --exit-code || (echo "Generated code not up to date - run 'go generate ./...'" && exit 1)
+
+      - name: Run tests
+        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
-      - name: Run go vet
-        run: go vet ./...
+          version: v2.1.6
 
-  test:
-    name: Test
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.24.12"
-          cache: true
-      - name: Run tests with coverage
-        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Verify formatting (gofumpt)
+        run: |
+          gofumpt -l -d . | tee /tmp/gofumpt.diff
+          test ! -s /tmp/gofumpt.diff || (echo "Code not formatted - run 'gofumpt -w .'" && exit 1)
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: coverage.out
           fail_ci_if_error: false
 
-  vulnerability-check:
-    name: Vulnerability Check
-    runs-on: ubuntu-22.04
-    needs: [lint, test]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.24.12"
-          cache: true
-      - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
-      - name: Run govulncheck
-        run: govulncheck ./...
-
+  # Secrets scanning
   secrets-scan:
     name: Secrets Scan
     runs-on: ubuntu-22.04
@@ -68,12 +74,12 @@ jobs:
         with:
           extra_args: --only-verified
 
+  # Build binaries for release
   build:
-    name: Build Binaries (${{ matrix.goos }}/${{ matrix.goarch }})
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-22.04
-    needs: [lint, test, vulnerability-check, secrets-scan]
-    # Only run on push to main or on release creation
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
+    needs: [pre-commit, secrets-scan]
+    if: github.event_name == 'push' || github.event_name == 'release'
     strategy:
       matrix:
         goos: [linux, darwin, windows]
@@ -87,7 +93,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.12"
+          go-version: "1.24"
           cache: true
 
       - name: Determine Version
@@ -158,12 +164,12 @@ jobs:
           asset_name: ${{ env.BINARY_NAME }}
           asset_content_type: application/octet-stream
 
+  # SBOM generation for compliance (optional - can be deferred)
   sbom:
     name: Generate SBOM
     runs-on: ubuntu-22.04
-    needs: [lint, test, vulnerability-check, secrets-scan]
-    # Only run on push to main or on release creation
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main') || (github.event_name == 'release'))
+    needs: [pre-commit, secrets-scan]
+    if: github.event_name == 'push' || github.event_name == 'release'
     steps:
       - uses: actions/checkout@v4
 
