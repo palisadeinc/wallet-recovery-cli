@@ -49,7 +49,7 @@ Generate an RSA 4096-bit keypair for MPC recovery:
 ./recovery generate-recovery-keypair --private-key-file=private.der --public-key-file=public.der
 
 # Generate with hex-encoded output (legacy format)
-./recovery generate-recovery-keypair --private-key-file=private.der --public-key-file=public.hex --format=hex
+./wallet-recovery-cli generate-recovery-keypair --private-key-file=private.der --public-key-file=public.hex --format=hex
 ```
 
 Required flags:
