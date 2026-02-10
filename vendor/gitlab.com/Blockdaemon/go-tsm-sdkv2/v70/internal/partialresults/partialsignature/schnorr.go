@@ -135,22 +135,22 @@ func (e *schnorrPartialSignatureCombiner) Add(partialSignature SchnorrPartialSig
 
 	} else {
 		if e.sharing != partialSignature.Sharing {
-			return fmt.Errorf("sharing type mismatch")
+			return fmt.Errorf("%w: sharing type mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if e.threshold != partialSignature.Threshold {
-			return fmt.Errorf("threshold mismatch")
+			return fmt.Errorf("%w: threshold mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !e.publicKey.Equals(partialSignature.PublicKey) {
-			return fmt.Errorf("public key mismatch")
+			return fmt.Errorf("%w: public key mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if e.schnorrVariant != partialSignature.SchnorrVariant {
-			return fmt.Errorf("schnorr variant mismatch")
+			return fmt.Errorf("%w: schnorr variant mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !e.r.Equals(partialSignature.R) {
-			return fmt.Errorf("r value mismatch")
+			return fmt.Errorf("%w: r value mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !bytes.Equal(e.challenge, partialSignature.Challenge) {
-			return fmt.Errorf("challenge mismatch")
+			return fmt.Errorf("%w: challenge mismatch", ErrIncompatiblePartialSignatures)
 		}
 	}
 

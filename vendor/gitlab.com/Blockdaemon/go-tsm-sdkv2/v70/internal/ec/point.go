@@ -21,7 +21,7 @@ func (p Point) Curve() Curve {
 }
 
 func (p Point) IsEmpty() bool {
-	return p.curve == nil
+	return p.curve == nil || p.value == nil
 }
 
 func (p Point) Encode() []byte {

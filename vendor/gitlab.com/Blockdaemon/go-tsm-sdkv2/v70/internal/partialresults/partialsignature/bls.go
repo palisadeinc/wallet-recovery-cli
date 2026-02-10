@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/blsvariant"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/crypto/bls"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/polynomial"
@@ -20,6 +21,7 @@ type BLSPartialSignature struct {
 	Threshold   int
 	PublicKey   ec.Point
 	SShare      ec.Point
+	BLSVariant  string
 }
 
 func (e *BLSPartialSignature) Encode() []byte {
@@ -37,7 +39,13 @@ func (e *BLSPartialSignature) Decode(b []byte) error {
 	return dec.Decode(e)
 }
 
-func NewBLSPartialSignature(protocolID string, playerIndex, threshold int, sharingType secretshare.SharingType, sShare, publicKey ec.Point) BLSPartialSignature {
+func NewBLSPartialSignature(protocolID string, playerIndex, threshold int, sharingType secretshare.SharingType, sShare, publicKey ec.Point, blsVariant string) BLSPartialSignature {
+	switch blsVariant {
+	case blsvariant.BLS12381MinimalSignatureSize, blsvariant.BLS12381MinimalPubKeySize:
+	default:
+		panic(fmt.Sprintf("unsupported BLS variant: %s", blsVariant))
+	}
+
 	return BLSPartialSignature{
 		Version:     blsPartialSignatureVersion,
 		Sharing:     sharingType,
@@ -46,6 +54,7 @@ func NewBLSPartialSignature(protocolID string, playerIndex, threshold int, shari
 		Threshold:   threshold,
 		PublicKey:   publicKey,
 		SShare:      sShare,
+		BLSVariant:  blsVariant,
 	}
 }
 
@@ -61,11 +70,12 @@ func FinalizeBLSSignature(partialSignatures []BLSPartialSignature, message []byt
 }
 
 type blsPartialSignatureCombiner struct {
-	sharing   secretshare.SharingType
-	threshold int
-	publicKey ec.Point
-	si        map[int]ec.Point
-	sigCurve  ec.Curve
+	sharing        secretshare.SharingType
+	threshold      int
+	publicKey      ec.Point
+	blsVariant     string
+	si             map[int]ec.Point
+	signatureCurve ec.Curve
 }
 
 func (e *blsPartialSignatureCombiner) Add(partialSignature BLSPartialSignature) error {
@@ -73,8 +83,18 @@ func (e *blsPartialSignatureCombiner) Add(partialSignature BLSPartialSignature) 
 		return fmt.Errorf("unsupported partial signature version: %d", partialSignature.Version)
 	}
 
+	signatureCurve, err := blsvariant.VariantToSignatureCurve(partialSignature.BLSVariant)
+	if err != nil {
+		return err
+	}
+
+	publicKeyCurve, err := blsvariant.VariantToPublicKeyCurve(partialSignature.BLSVariant)
+	if err != nil {
+		return err
+	}
+
 	switch partialSignature.ProtocolID {
-	case "SEPD23BLS", "BLS":
+	case "BLS":
 	default:
 		return fmt.Errorf("unsupported protocol for BLS: %s", partialSignature.ProtocolID)
 	}
@@ -82,37 +102,30 @@ func (e *blsPartialSignatureCombiner) Add(partialSignature BLSPartialSignature) 
 	if len(e.si) == 0 {
 		e.sharing = partialSignature.Sharing
 		e.threshold = partialSignature.Threshold
-		if pairingCurve, err := partialSignature.PublicKey.Curve().PairingCurve(); err != nil {
-			return fmt.Errorf("public key elliptic curve does not support pairings")
-		} else {
-			if partialSignature.PublicKey.Curve().Equals(pairingCurve.E1()) {
-				e.sigCurve = pairingCurve.E2()
-			} else {
-				e.sigCurve = pairingCurve.E1()
-			}
-		}
-		if !partialSignature.PublicKey.IsInLargeSubgroup() {
-			return fmt.Errorf("public key is not in the large prime order subgroup")
+		if err = validatePoint(partialSignature.PublicKey, "public key", publicKeyCurve); err != nil {
+			return err
 		}
 		e.publicKey = partialSignature.PublicKey
+		e.blsVariant = partialSignature.BLSVariant
 		e.si = map[int]ec.Point{}
+		e.signatureCurve = signatureCurve
 	} else {
 		if e.sharing != partialSignature.Sharing {
-			return fmt.Errorf("sharing type mismatch")
+			return fmt.Errorf("%w: sharing type mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if e.threshold != partialSignature.Threshold {
-			return fmt.Errorf("threshold mismatch")
+			return fmt.Errorf("%w: threshold mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !e.publicKey.Equals(partialSignature.PublicKey) {
-			return fmt.Errorf("public key mismatch")
+			return fmt.Errorf("%w: public key mismatch", ErrIncompatiblePartialSignatures)
+		}
+		if e.blsVariant != partialSignature.BLSVariant {
+			return fmt.Errorf("%w: bls variant mismatch", ErrIncompatiblePartialSignatures)
 		}
 	}
 
-	if !e.sigCurve.Equals(partialSignature.SShare.Curve()) {
-		return fmt.Errorf("signature share is from the wrong elliptic curve")
-	}
-	if !partialSignature.SShare.IsInLargeSubgroup() {
-		return fmt.Errorf("signature share is not in the large prime order subgroup")
+	if err = validatePoint(partialSignature.SShare, "signature share", signatureCurve); err != nil {
+		return err
 	}
 	e.si[partialSignature.PlayerIndex] = partialSignature.SShare
 
@@ -127,12 +140,12 @@ func (e *blsPartialSignatureCombiner) Signature(message []byte) ([]byte, error) 
 	var s ec.Point
 	switch e.sharing {
 	case secretshare.ShamirSharing:
-		s = polynomial.InterpolatePlayersInExponent(e.sigCurve.Zn().Zero(), e.threshold, e.si)
+		s = polynomial.InterpolatePlayersInExponent(e.signatureCurve.Zn().Zero(), e.threshold, e.si)
 	case secretshare.AdditiveSharing:
 		if len(e.si) > e.threshold+1 {
 			return nil, fmt.Errorf("too many partial signatures")
 		}
-		s = e.sigCurve.O()
+		s = e.signatureCurve.O()
 		for _, v := range e.si {
 			s = s.Add(v)
 		}
