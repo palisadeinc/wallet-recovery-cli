@@ -192,9 +192,7 @@ This software uses:
 - AES-256-GCM for symmetric encryption
 - ECDSA (SECP256K1) and ED25519 for digital signatures
 
-Users are responsible for ensuring compliance with applicable export control laws and regulations in their jurisdiction. This software is classified under ECCN 5D002 for U.S. Export Administration Regulations (EAR).
-
-For more information, see the [U.S. Bureau of Industry and Security](https://www.bis.doc.gov/).
+Users are responsible for ensuring compliance with applicable export control laws and regulations in their jurisdiction.
 
 ## License
 

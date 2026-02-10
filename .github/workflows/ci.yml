@@ -164,7 +164,6 @@ jobs:
           asset_name: ${{ env.BINARY_NAME }}
           asset_content_type: application/octet-stream
 
-  # SBOM generation for compliance (optional - can be deferred)
   sbom:
     name: Generate SBOM
     runs-on: ubuntu-22.04

@@ -1,8 +1,0 @@
-# Default owners for everything in the repo
-* @palisadeinc/security-team
-
-# Crypto-related code requires security team review
-/utils/ @palisadeinc/security-team
-/cmd/recover/ @palisadeinc/security-team
-/cmd/decrypt/ @palisadeinc/security-team
-
