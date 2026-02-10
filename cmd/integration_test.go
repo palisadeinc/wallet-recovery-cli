@@ -15,6 +15,13 @@ import (
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 )
 
+// TestMain reduces PBKDF2 iterations for faster test execution.
+// Production uses 3 million iterations; tests use 1000.
+func TestMain(m *testing.M) {
+	utils.PBKDF2Iterations = 1000
+	os.Exit(m.Run())
+}
+
 // TestGenerateCommandE2EUnencrypted tests the end-to-end flow of generating an unencrypted keypair
 func TestGenerateCommandE2EUnencrypted(t *testing.T) {
 	tempDir := t.TempDir()

@@ -15,6 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TestMain reduces PBKDF2 iterations for faster test execution.
+// Production uses 3 million iterations; tests use 1000.
+func TestMain(m *testing.M) {
+	utils.PBKDF2Iterations = 1000
+	os.Exit(m.Run())
+}
+
 func TestPrintAddressCommandStructure(t *testing.T) {
 	t.Run("Command Use field is set correctly", func(t *testing.T) {
 		if Cmd.Use != "print-address" {

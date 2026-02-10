@@ -4,10 +4,18 @@
 package utils_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 )
+
+// TestMain reduces PBKDF2 iterations for faster test execution.
+// Production uses 3 million iterations; tests use 1000.
+func TestMain(m *testing.M) {
+	utils.PBKDF2Iterations = 1000
+	os.Exit(m.Run())
+}
 
 func TestEncryptDecrypt(t *testing.T) {
 	tests := []struct {

@@ -12,9 +12,12 @@ import (
 )
 
 const (
-	pbkdf2Iterations = 3_000_000
-	pbkdf2KeyLength  = 32
-	saltSize         = 16
+	// DefaultPBKDF2Iterations is the production iteration count for PBKDF2.
+	// This is intentionally high (3 million) for security.
+	DefaultPBKDF2Iterations = 3_000_000
+
+	pbkdf2KeyLength = 32
+	saltSize        = 16
 
 	// MagicHeaderSize is the size of the magic header for encrypted files
 	MagicHeaderSize = 4
@@ -22,7 +25,14 @@ const (
 	MagicHeaderRSAKey = "PKE1"
 )
 
-var hashingFunc = sha512.New
+var (
+	hashingFunc = sha512.New
+
+	// PBKDF2Iterations is the number of PBKDF2 iterations to use.
+	// This can be reduced in tests for faster execution.
+	// DO NOT change this in production code.
+	PBKDF2Iterations = DefaultPBKDF2Iterations
+)
 
 func EncryptData(passwordBytes, contentBytes []byte) ([]byte, error) {
 	if passwordBytes == nil {
@@ -42,7 +52,7 @@ func EncryptData(passwordBytes, contentBytes []byte) ([]byte, error) {
 	}
 
 	// Derive encryption key using PBKDF2
-	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, pbkdf2Iterations, pbkdf2KeyLength)
+	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, PBKDF2Iterations, pbkdf2KeyLength)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive encryption key: %w", err)
 	}
@@ -92,7 +102,7 @@ func DecryptData(passwordBytes, encryptedData []byte) ([]byte, error) {
 	encryptedData = encryptedData[saltSize:]
 
 	// Derive encryption key using PBKDF2 with same parameters as encryption
-	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, pbkdf2Iterations, pbkdf2KeyLength)
+	key, err := pbkdf2.Key(hashingFunc, string(passwordBytes), salt, PBKDF2Iterations, pbkdf2KeyLength)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving decryption key: %w", err)
 	}
