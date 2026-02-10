@@ -1,0 +1,20 @@
+# Dependabot configuration for wallet-recovery-cli
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  # Go dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/London"
+    groups:
+      go-all:
+        patterns:
+          - "*"
+    rebase-strategy: "auto"
+    open-pull-requests-limit: 5
+
