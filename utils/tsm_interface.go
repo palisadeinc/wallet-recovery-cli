@@ -9,8 +9,6 @@ import (
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/tsm"
 )
 
-//go:generate mockgen -destination=../mocks/mock_tsm_client.go -package=mocks github.com/palisadeinc/wallet-recovery-cli/utils TSMClient
-
 // TSMClient is an interface that wraps the TSM SDK functions used for key recovery.
 // This interface allows for easier testing by enabling mock implementations.
 type TSMClient interface {

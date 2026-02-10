@@ -3,6 +3,3 @@
 *.iml
 coverage.out
 wallet-recovery-cli
-
-# Generated mocks - regenerate with go generate ./...
-mocks/
