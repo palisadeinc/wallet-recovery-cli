@@ -138,8 +138,6 @@ linters:
         text: 'var-naming: don''t use an underscore in package name'
       - path: (.+)\.go$
         text: 'var-naming: don''t use ALL_CAPS in Go names; use CamelCase'
-      - path: utils/(.+)\.go$
-        text: 'var-naming: avoid meaningless package names'
     paths:
       - third_party$
       - builtin$

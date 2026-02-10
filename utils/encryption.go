@@ -1,6 +1,7 @@
 // Copyright 2024 Palisade
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:revive // utils is an acceptable package name for utility functions
 package utils
 
 import (
