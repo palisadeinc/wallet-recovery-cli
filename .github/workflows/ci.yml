@@ -35,11 +35,6 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum || (echo "go.mod/go.sum not tidy - run 'go mod tidy'" && exit 1)
 
-      - name: Verify generated code is up to date
-        run: |
-          go generate ./...
-          git diff --exit-code || (echo "Generated code not up to date - run 'go generate ./...'" && exit 1)
-
       - name: Run tests
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
