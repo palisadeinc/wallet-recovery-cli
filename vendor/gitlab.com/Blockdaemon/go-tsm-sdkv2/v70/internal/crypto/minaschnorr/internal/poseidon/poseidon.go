@@ -12,15 +12,6 @@ var (
 	fq = ec.PallasMina.Zn()
 )
 
-// Permutation is the permute function to use
-type Permutation uint32
-
-const (
-	ThreeW Permutation = 0
-	FiveW  Permutation = 1
-	Three  Permutation = 2
-)
-
 // NetworkType is which Mina network id to use
 type NetworkType byte
 
@@ -30,17 +21,13 @@ const (
 	NullNet NetworkType = 2
 )
 
-func Hash(permutationType Permutation, networkID NetworkType, fieldElements []ec.Scalar) (ec.Scalar, error) {
+func Hash(networkID NetworkType, fieldElements []ec.Scalar) (ec.Scalar, error) {
 	// Input validation
 
 	for _, f := range fieldElements {
 		if !f.Field().Equals(fp) {
 			return ec.Scalar{}, errors.New("field element is from the wrong field")
 		}
-	}
-
-	if permutationType != ThreeW && permutationType != FiveW && permutationType != Three {
-		return ec.Scalar{}, fmt.Errorf("unsupported permutation type: %v", permutationType)
 	}
 
 	if networkID != TestNet && networkID != MainNet && networkID != NullNet {
@@ -52,17 +39,15 @@ func Hash(permutationType Permutation, networkID NetworkType, fieldElements []ec
 	once.Do(initPoseidonContexts)
 
 	ctx := new(context)
-	ctx.pType = permutationType
-	ctx.spongeWidth = contexts[permutationType].spongeWidth
-	ctx.spongeRate = contexts[permutationType].spongeRate
-	ctx.fullRounds = contexts[permutationType].fullRounds
-	ctx.sBox = contexts[permutationType].sBox
-	ctx.roundKeys = contexts[permutationType].roundKeys
-	ctx.mdsMatrix = contexts[permutationType].mdsMatrix
-	ctx.spongeIv = contexts[permutationType].spongeIv
-	ctx.state = make([]ec.Scalar, contexts[permutationType].spongeWidth)
+	ctx.spongeWidth = contexts[0].spongeWidth
+	ctx.spongeRate = contexts[0].spongeRate
+	ctx.fullRounds = contexts[0].fullRounds
+	ctx.roundKeys = contexts[0].roundKeys
+	ctx.mdsMatrix = contexts[0].mdsMatrix
+	ctx.spongeIv = contexts[0].spongeIv
+	ctx.state = make([]ec.Scalar, contexts[0].spongeWidth)
 	if networkID != NullNet {
-		iv := contexts[permutationType].spongeIv[networkID]
+		iv := contexts[0].spongeIv[networkID]
 		copy(ctx.state, iv)
 	} else {
 		for i := range ctx.state {
@@ -75,7 +60,7 @@ func Hash(permutationType Permutation, networkID NetworkType, fieldElements []ec
 
 	for _, f := range fieldElements {
 		if ctx.absorbed == ctx.spongeRate {
-			ctx.permute(permutationType)
+			ctx.permute()
 			ctx.absorbed = 0
 		}
 		ctx.state[ctx.absorbed] = ctx.state[ctx.absorbed].Add(f)
@@ -84,7 +69,7 @@ func Hash(permutationType Permutation, networkID NetworkType, fieldElements []ec
 
 	// Digest
 
-	ctx.permute(permutationType)
+	ctx.permute()
 	res := ctx.state[0].Value()
 	return fq.NewScalarWithModularReduction(res), nil
 }

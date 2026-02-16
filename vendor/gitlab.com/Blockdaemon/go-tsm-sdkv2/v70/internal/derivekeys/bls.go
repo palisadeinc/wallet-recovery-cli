@@ -6,7 +6,7 @@ import (
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 )
 
-func DeriveBLSKeys(publicKey ec.Point, privateKey ec.Scalar, chainCode []byte, chainPath []uint32, cache caching.Cache) (DerivedKeys, error) {
+func DeriveBLSKeys(blsVariant string, publicKey ec.Point, privateKey ec.Scalar, chainCode []byte, chainPath []uint32, cache caching.Cache) (DerivedKeys, error) {
 	if len(chainPath) > 0 {
 		return DerivedKeys{}, fmt.Errorf("key derivation is currently not supported for BLS")
 	}
@@ -18,7 +18,7 @@ func DeriveBLSKeys(publicKey ec.Point, privateKey ec.Scalar, chainCode []byte, c
 	}, nil
 }
 
-func DeriveBLSPublicKey(publicKey ec.Point, chainCode []byte, chainPath []uint32, cache caching.Cache) (DerivedPublicKey, error) {
+func DeriveBLSPublicKey(blsVariant string, publicKey ec.Point, chainCode []byte, chainPath []uint32, cache caching.Cache) (DerivedPublicKey, error) {
 	if len(chainPath) > 0 {
 		return DerivedPublicKey{}, fmt.Errorf("key derivation is currently not supported for BLS")
 	}
@@ -28,7 +28,7 @@ func DeriveBLSPublicKey(publicKey ec.Point, chainCode []byte, chainPath []uint32
 		ChainCode: chainCode,
 	}, nil
 }
-func DeriveBLSPrivateKey(privateKey ec.Scalar, chainCode []byte, chainPath []uint32, cache caching.Cache) (ec.Scalar, error) {
+func DeriveBLSPrivateKey(blsVariant string, privateKey ec.Scalar, publicKey ec.Point, chainCode []byte, chainPath []uint32, cache caching.Cache) (ec.Scalar, error) {
 	if len(chainPath) > 0 {
 		return ec.Scalar{}, fmt.Errorf("key derivation is currently not supported for BLS")
 	}

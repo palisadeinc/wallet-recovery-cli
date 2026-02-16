@@ -3,6 +3,7 @@ package partialsignature
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/crypto/ecdsa"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
@@ -14,6 +15,8 @@ const (
 	ecdsaPartialSignatureVersionV1 = 1
 	ecdsaPartialSignatureVersionV2 = 2
 )
+
+var ErrIncompatiblePartialSignatures = errors.New("incompatible partial signatures")
 
 type ECDSAPartialSignature struct {
 	Version     int
@@ -117,19 +120,19 @@ func (e *ecdsaPartialSignatureCombiner) Add(partialSignature ECDSAPartialSignatu
 		e.wi = map[int]ec.Scalar{}
 	} else {
 		if e.version != partialSignature.Version {
-			return fmt.Errorf("version mismatch")
+			return fmt.Errorf("%w: version mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if e.sharing != partialSignature.Sharing {
-			return fmt.Errorf("sharing type mismatch")
+			return fmt.Errorf("%w: sharing type mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if e.threshold != partialSignature.Threshold {
-			return fmt.Errorf("threshold mismatch")
+			return fmt.Errorf("%w: threshold mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !e.publicKey.Equals(partialSignature.PublicKey) {
-			return fmt.Errorf("public key mismatch")
+			return fmt.Errorf("%w: public key mismatch", ErrIncompatiblePartialSignatures)
 		}
 		if !e.r.Equals(partialSignature.R) {
-			return fmt.Errorf("r value mismatch")
+			return fmt.Errorf("%w: r value mismatch", ErrIncompatiblePartialSignatures)
 		}
 	}
 

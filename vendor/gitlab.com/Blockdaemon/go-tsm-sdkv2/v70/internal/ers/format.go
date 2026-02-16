@@ -56,8 +56,7 @@ type SchnorrAuxDataPrivate struct {
 }
 
 type BLSAuxDataPublic struct {
-	Algorithm        string `json:"algorithm"`
-	SignatureVariant string `json:"signatureVariant"`
+	Algorithm string `json:"algorithm"`
 }
 
 type BLSAuxDataPrivate struct {
