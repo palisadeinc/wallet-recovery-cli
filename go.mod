@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0
+	filippo.io/edwards25519 v1.1.1
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/consensys/gnark-crypto v0.19.2 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
