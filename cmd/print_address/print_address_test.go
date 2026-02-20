@@ -243,6 +243,58 @@ func TestPrintAddressWithEncryptedKey(t *testing.T) {
 	// This test just verifies the file is correctly identified as encrypted
 }
 
+func TestPrintAddressWithLegacyEncryptedKey(t *testing.T) {
+	// Test that legacy headerless encrypted files are detected
+	// This verifies backward compatibility with files created before PKE1 header was added
+	tmpDir := t.TempDir()
+
+	// Valid 32-byte private key
+	privateKeyHex := "044c2e76de7699aac908b2a60756a550f5acc3fca8a9204ed0475dc0b0a30acb"
+	privateKeyBytes, err := hex.DecodeString(privateKeyHex)
+	if err != nil {
+		t.Fatalf("Failed to decode hex: %v", err)
+	}
+
+	// Encrypt WITHOUT header (legacy format)
+	password := []byte("testpassword123")
+	encryptedBytes, err := utils.EncryptData(password, privateKeyBytes)
+	if err != nil {
+		t.Fatalf("Failed to encrypt: %v", err)
+	}
+
+	// Write the legacy encrypted key to a temp file
+	keyFile := filepath.Join(tmpDir, "legacy_encrypted.enc")
+	if err := os.WriteFile(keyFile, encryptedBytes, 0o400); err != nil {
+		t.Fatalf("Failed to write key file: %v", err)
+	}
+
+	// Verify the file does NOT have the encryption header (it's legacy format)
+	fileBytes, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("Failed to read key file: %v", err)
+	}
+	if utils.HasEncryptionHeader(fileBytes) {
+		t.Error("Legacy encrypted file should NOT have PKE1 header")
+	}
+
+	// Verify it IS detected as encrypted data by the heuristic
+	if !utils.LooksLikeEncryptedData(fileBytes) {
+		t.Error("Legacy encrypted file should be detected by LooksLikeEncryptedData")
+	}
+
+	// Verify we can actually decrypt it with the correct password
+	decrypted, err := utils.DecryptData([]byte("testpassword123"), fileBytes)
+	if err != nil {
+		t.Fatalf("Failed to decrypt legacy encrypted file: %v", err)
+	}
+	if !bytes.Equal(decrypted, privateKeyBytes) {
+		t.Error("Decrypted content doesn't match original")
+	}
+
+	// Note: We can't easily test the interactive password prompt in unit tests
+	// This test verifies the file detection logic works for legacy format
+}
+
 func TestPrintAddressWithNonExistentFile(t *testing.T) {
 	cmd := createTestCommand()
 	var stdout, stderr bytes.Buffer

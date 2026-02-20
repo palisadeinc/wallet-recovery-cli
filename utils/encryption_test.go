@@ -114,6 +114,76 @@ func TestHasEncryptionHeader(t *testing.T) {
 	}
 }
 
+func TestLooksLikeEncryptedData(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     []byte
+		expected bool
+	}{
+		{
+			name: "actual encrypted data (headerless)",
+			data: func() []byte {
+				enc, err := utils.EncryptData([]byte("pass"), []byte("test"))
+				if err != nil {
+					panic(err)
+				}
+				return enc
+			}(),
+			expected: true,
+		},
+		{
+			name:     "hex-encoded DER private key (plaintext)",
+			data:     []byte("308204be020100300d06092a864886f70d0101010500048204a8308204a402010002820101"),
+			expected: false,
+		},
+		{
+			name:     "plain ASCII text",
+			data:     []byte("This is just plain text that should not be detected as encrypted."),
+			expected: false,
+		},
+		{
+			name:     "empty data",
+			data:     []byte{},
+			expected: false,
+		},
+		{
+			name:     "data too short for encryption",
+			data:     []byte{0x01, 0x02, 0x03, 0x04, 0x05},
+			expected: false,
+		},
+		{
+			name: "random binary data above threshold",
+			data: func() []byte {
+				b := make([]byte, 64)
+				for i := range b {
+					b[i] = byte(i * 7 % 256)
+				}
+				return b
+			}(),
+			expected: true,
+		},
+		{
+			name:     "mostly printable with some binary",
+			data:     []byte("Hello World with some binary: \x00\x01\x02 but mostly text here..........."),
+			expected: false,
+		},
+		{
+			name:     "PKE1 header (should not match - use HasEncryptionHeader instead)",
+			data:     []byte("PKE1" + string(make([]byte, 50))),
+			expected: true, // Note: PKE1 files would also look binary, but we check HasEncryptionHeader first
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := utils.LooksLikeEncryptedData(tt.data)
+			if result != tt.expected {
+				t.Errorf("LooksLikeEncryptedData() = %v, want %v (data len=%d)", result, tt.expected, len(tt.data))
+			}
+		})
+	}
+}
+
 func TestEncryptDecryptWithHeader(t *testing.T) {
 	tests := []struct {
 		name     string
