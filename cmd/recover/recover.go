@@ -29,6 +29,8 @@ const (
 	flagQuorumID        = "quorum-id"
 	flagKeyID           = "key-id"
 	flagKeyType         = "key-type"
+
+	minPasswordLength = 8
 )
 
 var Cmd = &cobra.Command{
@@ -333,6 +335,21 @@ Security Notes:
 			}
 			cmd.Printf("XRP address: %s\n", xrpAddress)
 
+			// Bitcoin addresses (both testnet and mainnet)
+			btcTestnetAddress, err := utils.GetBitcoinAddressFromPrivateKeyBytes(privateKeyBytes, false)
+			if err != nil {
+				cmd.PrintErrln("Error getting Bitcoin testnet address:", err)
+				return fmt.Errorf("failed to get bitcoin testnet address: %w", err)
+			}
+			cmd.Printf("Bitcoin address (testnet): %s\n", btcTestnetAddress)
+
+			btcMainnetAddress, err := utils.GetBitcoinAddressFromPrivateKeyBytes(privateKeyBytes, true)
+			if err != nil {
+				cmd.PrintErrln("Error getting Bitcoin mainnet address:", err)
+				return fmt.Errorf("failed to get bitcoin mainnet address: %w", err)
+			}
+			cmd.Printf("Bitcoin address (mainnet): %s\n", btcMainnetAddress)
+
 		case models.KeyAlgorithmED25519:
 			privateKeyBytes, err = utils.RecoverED25519PrivateKey(
 				recoveryDataBytes, rootWalletKeyPkix, quorumID, keyID, ersRSAPrivateKey, ersPublicKey,
@@ -374,53 +391,61 @@ Security Notes:
 			cmd.Println("Writing private key to file...", outputFilePath)
 			contentBytes := privateKeyBytes
 			format := "plain"
-			if encryptOutput := cmd.Flags().Changed(flagEncryptOutput); encryptOutput {
+
+			encryptOutput, err := cmd.Flags().GetBool(flagEncryptOutput)
+			if err != nil {
+				cmd.PrintErrln("Error retrieving encrypt output flag:", err)
+				return fmt.Errorf("failed to retrieve encrypt output flag: %w", err)
+			}
+
+			if encryptOutput {
 				format = "encrypted"
-				encryptOutput, err = cmd.Flags().GetBool(flagEncryptOutput)
+				// Prompt for password
+				cmd.Print("Enter password for encryption: ")
+				passwordBytes, err := term.ReadPassword(syscall.Stdin)
 				if err != nil {
-					cmd.PrintErrln("Error retrieving encrypt output flag:", err)
-					return fmt.Errorf("failed to retrieve encrypt output flag: %w", err)
+					cmd.PrintErrln("Error reading password:", err)
+					return fmt.Errorf("failed to read password: %w", err)
+				}
+				cmd.Println()
+
+				// Validate password length before confirmation
+				if len(passwordBytes) < minPasswordLength {
+					utils.ClearSensitiveBytes(passwordBytes)
+					cmd.PrintErrf("Password must be at least %d characters\n", minPasswordLength)
+					return fmt.Errorf("password must be at least %d characters", minPasswordLength)
 				}
 
-				if encryptOutput {
-					// Prompt for password
-					cmd.Print("Enter password for encryption: ")
-					passwordBytes, err := term.ReadPassword(syscall.Stdin)
-					if err != nil {
-						cmd.PrintErrln("Error reading password:", err)
-						return fmt.Errorf("failed to read password: %w", err)
-					}
-					cmd.Println()
+				cmd.Print("Confirm password: ")
+				confirmPasswordBytes, err := term.ReadPassword(syscall.Stdin)
+				if err != nil {
+					cmd.PrintErrln("Error reading password confirmation:", err)
+					return fmt.Errorf("failed to read password confirmation: %w", err)
+				}
+				cmd.Println()
 
-					cmd.Print("Confirm password: ")
-					confirmPasswordBytes, err := term.ReadPassword(syscall.Stdin)
-					if err != nil {
-						cmd.PrintErrln("Error reading password confirmation:", err)
-						return fmt.Errorf("failed to read password confirmation: %w", err)
-					}
-					cmd.Println()
+				if !bytes.Equal(passwordBytes, confirmPasswordBytes) {
+					utils.ClearSensitiveBytes(passwordBytes)
+					utils.ClearSensitiveBytes(confirmPasswordBytes)
+					cmd.PrintErrln("Passwords do not match")
+					return fmt.Errorf("passwords do not match")
+				}
 
-					if !bytes.Equal(passwordBytes, confirmPasswordBytes) {
-						cmd.PrintErrln("Passwords do not match")
-						return fmt.Errorf("passwords do not match")
-					}
+				for i := range confirmPasswordBytes {
+					confirmPasswordBytes[i] = 0
+				}
 
-					for i := range confirmPasswordBytes {
-						confirmPasswordBytes[i] = 0
+				contentBytes, err = utils.EncryptWithHeader(passwordBytes, contentBytes)
+				// clear sensitive data
+				defer func() {
+					for i := range passwordBytes {
+						passwordBytes[i] = 0
 					}
+				}()
 
-					contentBytes, err = utils.EncryptWithHeader(passwordBytes, contentBytes)
-					// clear sensitive data
-					defer func() {
-						for i := range passwordBytes {
-							passwordBytes[i] = 0
-						}
-					}()
-
-					if err != nil {
-						cmd.PrintErrln("Error encrypting data:", err)
-						return fmt.Errorf("failed to encrypt data: %w", err)
-					}
+				if err != nil {
+					cmd.PrintErrln("Error encrypting data:", err)
+					return fmt.Errorf("failed to encrypt data: %w", err)
 				}
 			}
 

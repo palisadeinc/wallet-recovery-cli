@@ -11,6 +11,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/mr-tron/base58"
 
 	"filippo.io/edwards25519"
@@ -101,6 +104,42 @@ func GetXRPAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	// XRP uses a custom alphabet: "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
 	xrpAlphabet := "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
 	return base58EncodeWithAlphabet(addressBytes, xrpAlphabet), nil
+}
+
+// GetBitcoinAddressFromPrivateKeyBytes derives a Bitcoin Native SegWit (P2WPKH) address
+// from SECP256K1 private key bytes. Returns testnet address (tb1...) by default.
+// For mainnet addresses (bc1...), set mainnet parameter to true.
+func GetBitcoinAddressFromPrivateKeyBytes(privateKeyBytes []byte, mainnet bool) (string, error) {
+	// Create ECDSA private key from bytes
+	privateKey := new(ecdsa.PrivateKey)
+	privateKey.D = new(big.Int).SetBytes(privateKeyBytes)
+	privateKey.PublicKey.Curve = crypto.S256() // Use secp256k1 curve
+	privateKey.PublicKey.X, privateKey.PublicKey.Y = privateKey.PublicKey.Curve.ScalarBaseMult(privateKeyBytes)
+
+	// Get compressed public key (33 bytes)
+	pubKeyBytes := elliptic.MarshalCompressed(privateKey.PublicKey.Curve, privateKey.PublicKey.X, privateKey.PublicKey.Y)
+
+	// Parse with btcec for proper Bitcoin key handling
+	pubKey, err := btcec.ParsePubKey(pubKeyBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse public key: %w", err)
+	}
+
+	// Select network params
+	params := &chaincfg.TestNet3Params
+	if mainnet {
+		params = &chaincfg.MainNetParams
+	}
+
+	// Generate Native SegWit address (P2WPKH) from the compressed public key
+	// This creates a witness pubkey hash address (bc1... or tb1...)
+	pubKeyHash := btcutil.Hash160(pubKey.SerializeCompressed())
+	address, err := btcutil.NewAddressWitnessPubKeyHash(pubKeyHash, params)
+	if err != nil {
+		return "", fmt.Errorf("failed to create witness address: %w", err)
+	}
+
+	return address.EncodeAddress(), nil
 }
 
 // base58EncodeWithAlphabet encodes bytes using a custom alphabet

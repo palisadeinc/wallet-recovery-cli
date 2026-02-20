@@ -10,10 +10,10 @@ A command-line interface (CLI) tool for performing MPC (Multi-Party Computation)
 
 This tool provides functionality for:
 - Generating RSA keypairs for MPC recovery purposes
-- Recovering ECDSA (SECP256K1) private keys for Ethereum/EVM chains
+- Recovering ECDSA (SECP256K1) private keys for Ethereum/EVM, XRP, and Bitcoin
 - Recovering ED25519 private keys for Solana
 - Decrypting encrypted private key files generated during the recovery process
-- Printing blockchain addresses (Ethereum for SECP256K1, Solana for ED25519)
+- Printing blockchain addresses (Ethereum/XRP/Bitcoin for SECP256K1, Solana for ED25519)
 
 ## Installation
 
@@ -102,8 +102,12 @@ The recovery operation performs the following steps:
 3. Determines the key type (from flag or recovery kit metadata).
 4. Validates the integrity of the recovery data using the appropriate algorithm (ECDSA for SECP256K1, Schnorr for ED25519).
 5. If validations pass, recovers the private key using the recovery data and the provided RSA private key.
-6. Displays the corresponding blockchain address (Ethereum for SECP256K1, Solana for ED25519).
+6. Displays the corresponding blockchain addresses:
+   - For SECP256K1: Ethereum, XRP, and Bitcoin addresses (both testnet and mainnet)
+   - For ED25519: Solana address
 7. The recovered private key is printed to standard output in base64 format or saved to file.
+
+**Note**: When using `--encrypt-output=true`, passwords must be at least 8 characters.
 
 ### Decrypt Encrypted Private Key File
 
@@ -124,22 +128,27 @@ The command will prompt for the password that was used during encryption.
 Print the blockchain address derived from a recovered private key:
 
 ```bash
-# Plain-text private key file
+# Plain-text private key file (auto-detects key type)
 ./recovery print-address --private-key-file=private.der
 
-# Encrypted private key file
-./recovery print-address --private-key-file=recovered.enc --encrypted
+# Encrypted private key file (auto-detected, will prompt for password)
+./recovery print-address --private-key-file=recovered.enc
+
+# Specify key type explicitly (useful when auto-detection is ambiguous)
+./recovery print-address --private-key-file=private.der --key-type=ED25519
 ```
 
 Required flags:
 - `--private-key-file`: Path to the (plain-text or encrypted) private key file.
 
 Optional flags:
-- `--encrypted`: Set to `true` if the private key file is encrypted (default `false`).
+- `--key-type`: Key algorithm type: `SECP256K1` or `ED25519`. If not specified, auto-detects based on key content. Note: Both key types produce 32-byte private keys, so specify this flag if auto-detection produces incorrect results.
 
-The command prints the corresponding blockchain address to standard output:
-- For SECP256K1 keys: EVM-compatible Ethereum address
-- For ED25519 keys: Solana address (hex-encoded public key)
+The command automatically detects encrypted files (by checking for the PKE1 header) and prompts for the password.
+
+The command prints the corresponding blockchain addresses to standard output:
+- For SECP256K1 keys: EVM-compatible (Ethereum), XRP, and Bitcoin addresses (both testnet and mainnet)
+- For ED25519 keys: Solana address
 
 ## Security Considerations
 

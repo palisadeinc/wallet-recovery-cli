@@ -116,7 +116,7 @@ Security Notes:
 			contentBytes, err = utils.DecryptData(passwordBytes, encryptedPrivateKeyFileBytes)
 		}
 		if err != nil {
-			cmd.PrintErrln("Error decrypting private key file:", err)
+			cmd.PrintErrln("Error decrypting private key file: incorrect password or corrupted file")
 			return fmt.Errorf("failed to decrypt private key file: %w", err)
 		}
 

@@ -12,7 +12,10 @@ import (
 	"golang.org/x/term"
 )
 
-const flagPrivateKeyFile = "private-key-file"
+const (
+	flagPrivateKeyFile = "private-key-file"
+	flagKeyType        = "key-type"
+)
 
 var Cmd = &cobra.Command{
 	Use:   "print-address",
@@ -20,16 +23,18 @@ var Cmd = &cobra.Command{
 	Long: `Derive and print the blockchain address from a recovered private key.
 
 This command reads a private key file (encrypted or plain text) and derives the
-corresponding blockchain address. It supports multiple key types and chains:
-  - SECP256K1 keys: Derives EVM-compatible Ethereum addresses
+corresponding blockchain addresses. It supports multiple key types and chains:
+  - SECP256K1 keys: Derives EVM, XRP, and Bitcoin addresses
   - ED25519 keys: Derives Solana addresses
 
-The command automatically detects:
-  - Whether the file is encrypted (by checking for the PKE1 header)
-  - The key type from the private key content
+The command automatically detects whether the file is encrypted (by checking for
+the PKE1 header). Use --key-type to specify the key algorithm if auto-detection
+produces incorrect results (both ED25519 and SECP256K1 keys are 32 bytes).
 
 Supported Chains:
   - Ethereum and EVM-compatible chains (SECP256K1)
+  - XRP Ledger (SECP256K1)
+  - Bitcoin (SECP256K1) - both testnet and mainnet addresses
   - Solana (ED25519)
 
 Examples:
@@ -129,11 +134,30 @@ Security Notes:
 			copy(contentBytes, fileBytes)
 		}
 
-		// Try to derive Ethereum address first (SECP256K1 keys)
-		address, err := utils.GetEthereumAddressFromPrivateKeyBytes(contentBytes)
+		// Check if key type was explicitly specified
+		keyType, err := cmd.Flags().GetString(flagKeyType)
+		if err != nil {
+			cmd.PrintErrln("Error retrieving key type:", err)
+			return fmt.Errorf("failed to retrieve key type: %w", err)
+		}
+
+		// If key type is specified, use it directly
+		if keyType != "" {
+			switch keyType {
+			case "SECP256K1":
+				return printSECP256K1Addresses(cmd, contentBytes)
+			case "ED25519":
+				return printED25519Addresses(cmd, contentBytes)
+			default:
+				cmd.PrintErrln("Invalid key type:", keyType, "(allowed values: SECP256K1, ED25519)")
+				return fmt.Errorf("invalid key type: %s (allowed values: SECP256K1, ED25519)", keyType)
+			}
+		}
+
+		// Auto-detect: try SECP256K1 first (more common), then ED25519
+		_, err = utils.GetEthereumAddressFromPrivateKeyBytes(contentBytes)
 		if err == nil {
-			cmd.Println("EVM-compatible address:", address)
-			return nil
+			return printSECP256K1Addresses(cmd, contentBytes)
 		}
 
 		// If Ethereum derivation fails, try Solana (ED25519 keys)
@@ -149,8 +173,48 @@ Security Notes:
 	},
 }
 
+// printSECP256K1Addresses prints all addresses derivable from a SECP256K1 private key
+func printSECP256K1Addresses(cmd *cobra.Command, contentBytes []byte) error {
+	address, err := utils.GetEthereumAddressFromPrivateKeyBytes(contentBytes)
+	if err != nil {
+		cmd.PrintErrln("Error getting EVM address:", err)
+		return fmt.Errorf("failed to get EVM address: %w", err)
+	}
+	cmd.Println("EVM-compatible address:", address)
+
+	// Also show XRP and Bitcoin addresses for SECP256K1 keys
+	xrpAddress, xrpErr := utils.GetXRPAddressFromPrivateKeyBytes(contentBytes)
+	if xrpErr == nil {
+		cmd.Println("XRP address:", xrpAddress)
+	}
+
+	btcTestnet, btcTestErr := utils.GetBitcoinAddressFromPrivateKeyBytes(contentBytes, false)
+	if btcTestErr == nil {
+		cmd.Println("Bitcoin address (testnet):", btcTestnet)
+	}
+
+	btcMainnet, btcMainErr := utils.GetBitcoinAddressFromPrivateKeyBytes(contentBytes, true)
+	if btcMainErr == nil {
+		cmd.Println("Bitcoin address (mainnet):", btcMainnet)
+	}
+
+	return nil
+}
+
+// printED25519Addresses prints all addresses derivable from an ED25519 private key
+func printED25519Addresses(cmd *cobra.Command, contentBytes []byte) error {
+	solanaAddress, err := utils.GetSolanaAddressFromPrivateKeyBytes(contentBytes)
+	if err != nil {
+		cmd.PrintErrln("Error getting Solana address:", err)
+		return fmt.Errorf("failed to get Solana address: %w", err)
+	}
+	cmd.Println("Solana address:", solanaAddress)
+	return nil
+}
+
 func init() {
 	Cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing private key (encrypted or plain). Must exist and be readable.")
+	Cmd.Flags().String(flagKeyType, "", "Key algorithm type: SECP256K1 or ED25519. If not specified, auto-detects (may be incorrect for 32-byte keys).")
 	if err := Cmd.MarkFlagRequired(flagPrivateKeyFile); err != nil {
 		Cmd.PrintErrln("Error marking private key file as required:", err)
 		return

@@ -126,6 +126,7 @@ func createTestCommand() *cobra.Command {
 		RunE:  Cmd.RunE,
 	}
 	cmd.Flags().String(flagPrivateKeyFile, "", "Path to file containing private key.")
+	cmd.Flags().String(flagKeyType, "", "Key algorithm type: SECP256K1 or ED25519.")
 	return cmd
 }
 

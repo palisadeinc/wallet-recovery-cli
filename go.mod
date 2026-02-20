@@ -5,6 +5,9 @@ go 1.25.7
 replace gitlab.com/sepior/go-tsm-sdkv2 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
 
 require (
+	github.com/btcsuite/btcd v0.25.0
+	github.com/btcsuite/btcd/btcec/v2 v2.3.6
+	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/google/uuid v1.6.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/spf13/cobra v1.10.2
@@ -15,6 +18,7 @@ require (
 
 require (
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260208002143-2551aa251e34 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
