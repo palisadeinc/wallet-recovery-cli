@@ -11,8 +11,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
-	"syscall"
 
 	"github.com/google/uuid"
 	"github.com/palisadeinc/wallet-recovery-cli/models"
@@ -142,7 +142,7 @@ Security Notes:
 		if utils.HasEncryptionHeader(privateKeyBytes) {
 			cmd.Println("Encrypted private key detected.")
 			cmd.Print("Enter password to decrypt private key: ")
-			passwordBytes, err := term.ReadPassword(syscall.Stdin)
+			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 			if err != nil {
 				cmd.PrintErrln("\nError reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)
@@ -402,7 +402,7 @@ Security Notes:
 				format = "encrypted"
 				// Prompt for password
 				cmd.Print("Enter password for encryption: ")
-				passwordBytes, err := term.ReadPassword(syscall.Stdin)
+				passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 				if err != nil {
 					cmd.PrintErrln("Error reading password:", err)
 					return fmt.Errorf("failed to read password: %w", err)
@@ -417,7 +417,7 @@ Security Notes:
 				}
 
 				cmd.Print("Confirm password: ")
-				confirmPasswordBytes, err := term.ReadPassword(syscall.Stdin)
+				confirmPasswordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 				if err != nil {
 					cmd.PrintErrln("Error reading password confirmation:", err)
 					return fmt.Errorf("failed to read password confirmation: %w", err)

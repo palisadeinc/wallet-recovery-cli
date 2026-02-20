@@ -25,6 +25,7 @@ const (
 	curveStarkCurve   = 4010
 	curvePallasMina   = 4020
 	curveRistretto256 = 4030
+	curveBabyJubjub   = 4040
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	StarkCurve   Curve
 	PallasMina   Curve
 	Ristretto255 Curve
+	BabyJubjub   Curve
 
 	curvesInitialized sync.Once
 	curves            = map[uint16]Curve{}
@@ -154,6 +156,9 @@ func initCurves() {
 
 		Ristretto255 = newRistretto255()
 		curves[Ristretto255.curveID()] = Ristretto255
+
+		BabyJubjub = newBabyJubjub()
+		curves[BabyJubjub.curveID()] = BabyJubjub
 	})
 }
 

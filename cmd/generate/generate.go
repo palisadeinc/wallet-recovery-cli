@@ -11,7 +11,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"syscall"
 
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 	"github.com/spf13/cobra"
@@ -132,7 +131,7 @@ Security Notes:
 		var passwordBytes []byte
 		if encryptPrivateKey {
 			fmt.Fprint(cmd.OutOrStdout(), "Enter password to encrypt private key: ")
-			passwordBytes, err = term.ReadPassword(syscall.Stdin)
+			passwordBytes, err = term.ReadPassword(int(os.Stdin.Fd()))
 			if err != nil {
 				cmd.PrintErrln("\nError reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)
@@ -146,7 +145,7 @@ Security Notes:
 			}
 
 			fmt.Fprint(cmd.OutOrStdout(), "Confirm password: ")
-			confirmPasswordBytes, err := term.ReadPassword(syscall.Stdin)
+			confirmPasswordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 			if err != nil {
 				utils.ClearSensitiveBytes(passwordBytes)
 				cmd.PrintErrln("\nError reading password confirmation:", err)

@@ -8,8 +8,8 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
-	"syscall"
 
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 	"github.com/spf13/cobra"
@@ -102,7 +102,7 @@ Security Notes:
 
 		// File is encrypted - prompt for password
 		cmd.Print("Enter password to validate: ")
-		passwordBytes, err := term.ReadPassword(syscall.Stdin)
+		passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
 			cmd.PrintErrln("\nError reading password:", err)
 			return fmt.Errorf("failed to read password: %w", err)

@@ -18,7 +18,7 @@ func (e Scalar) Field() Field {
 }
 
 func (e Scalar) IsEmpty() bool {
-	return e.field == nil
+	return e.field == nil || e.value == nil
 }
 
 func (e Scalar) Value() *big.Int {

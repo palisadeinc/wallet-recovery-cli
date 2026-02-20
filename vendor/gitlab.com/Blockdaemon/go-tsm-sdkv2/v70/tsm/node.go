@@ -119,13 +119,13 @@ func (n *node) call(ctx context.Context, httpMethod string, path string, session
 				var err error
 				data, err = marshalJSON(input)
 				if err != nil {
-					return nil, fmt.Errorf("%w: %s sessionID=%s", ErrOperationFailed, err, sessionConfig.sessionID)
+					return nil, toTSMError(err, ErrOperationFailed)
 				}
 			}
 		}
 		request, err := http.NewRequestWithContext(ctx, httpMethod, path, data)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %s sessionID=%s", ErrOperationFailed, err, sessionConfig.sessionID)
+			return nil, toTSMError(err, ErrOperationFailed)
 		}
 		if isJson {
 			request.Header.Set("Content-Type", "application-type/json")
@@ -136,12 +136,13 @@ func (n *node) call(ctx context.Context, httpMethod string, path string, session
 	response, err := f()
 	if err != nil {
 		if errors.Is(err, ErrAuthentication) {
-			return nil, fmt.Errorf("%w: sessionID=%s", err, sessionConfig.sessionID)
+			return nil, wrapWithSessionID(ErrAuthentication, err, sessionConfig.sessionID)
 		}
-		return nil, fmt.Errorf("%w: %s sessionID=%s", ErrOperationFailed, err, sessionConfig.sessionID)
+		return nil, wrapWithSessionID(ErrOperationFailed, err, sessionConfig.sessionID)
 	}
 	// retry in case of expired tokens etc.
 	if response.StatusCode == http.StatusUnauthorized {
+		_, _ = io.Copy(io.Discard, response.Body)
 		closeResponseBody(response)
 
 		err = n.Unauthorized()
