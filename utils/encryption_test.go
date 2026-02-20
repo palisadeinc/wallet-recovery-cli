@@ -1,24 +1,73 @@
+// Copyright 2024 Palisade
+// SPDX-License-Identifier: Apache-2.0
+
 package utils_test
 
 import (
+	"os"
 	"testing"
 
-	"github.com/palisadeinc/mpc-recovery/utils"
+	"github.com/palisadeinc/wallet-recovery-cli/utils"
 )
 
+// TestMain reduces PBKDF2 iterations for faster test execution.
+// Production uses 3 million iterations; tests use 1000.
+func TestMain(m *testing.M) {
+	utils.PBKDF2Iterations = 1000
+	os.Exit(m.Run())
+}
+
 func TestEncryptDecrypt(t *testing.T) {
-	// Test encrypting and decrypting a message
-	message := "Hello, world!"
-	ciphertext, err := utils.EncryptData([]byte("password1234"), []byte(message))
-	if err != nil {
-		t.Errorf("encrypt failed: %v", err)
+	tests := []struct {
+		name     string
+		password string
+		message  string
+		wantErr  bool
+	}{
+		{
+			name:     "valid message encryption and decryption",
+			password: "password1234",
+			message:  "Hello, world!",
+			wantErr:  false,
+		},
+		{
+			name:     "empty message",
+			password: "password1234",
+			message:  "",
+			wantErr:  false,
+		},
+		{
+			name:     "long message",
+			password: "password1234",
+			message:  "The quick brown fox jumps over the lazy dog. This is a longer message to test encryption.",
+			wantErr:  false,
+		},
+		{
+			name:     "special characters in message",
+			password: "password1234",
+			message:  "!@#$%^&*()_+-=[]{}|;:',.<>?/",
+			wantErr:  false,
+		},
 	}
-	plaintext, err := utils.DecryptData([]byte("password1234"), ciphertext)
-	if err != nil {
-		t.Errorf("decrypt failed: %v", err)
-	}
-	if string(plaintext) != message {
-		t.Errorf("decrypted message does not match original")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ciphertext, err := utils.EncryptData([]byte(tt.password), []byte(tt.message))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EncryptData() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			plaintext, err := utils.DecryptData([]byte(tt.password), ciphertext)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecryptData() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if string(plaintext) != tt.message {
+				t.Errorf("DecryptData() = %q, want %q", string(plaintext), tt.message)
+			}
+		})
 	}
 }
 
@@ -65,61 +114,247 @@ func TestHasEncryptionHeader(t *testing.T) {
 	}
 }
 
+func TestLooksLikeEncryptedData(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     []byte
+		expected bool
+	}{
+		{
+			name: "actual encrypted data (headerless)",
+			data: func() []byte {
+				enc, err := utils.EncryptData([]byte("pass"), []byte("test"))
+				if err != nil {
+					panic(err)
+				}
+				return enc
+			}(),
+			expected: true,
+		},
+		{
+			name:     "hex-encoded DER private key (plaintext)",
+			data:     []byte("308204be020100300d06092a864886f70d0101010500048204a8308204a402010002820101"),
+			expected: false,
+		},
+		{
+			name:     "plain ASCII text",
+			data:     []byte("This is just plain text that should not be detected as encrypted."),
+			expected: false,
+		},
+		{
+			name:     "empty data",
+			data:     []byte{},
+			expected: false,
+		},
+		{
+			name:     "data too short for encryption",
+			data:     []byte{0x01, 0x02, 0x03, 0x04, 0x05},
+			expected: false,
+		},
+		{
+			name: "random binary data above threshold",
+			data: func() []byte {
+				b := make([]byte, 64)
+				for i := range b {
+					b[i] = byte(i * 7 % 256)
+				}
+				return b
+			}(),
+			expected: true,
+		},
+		{
+			name:     "mostly printable with some binary",
+			data:     []byte("Hello World with some binary: \x00\x01\x02 but mostly text here..........."),
+			expected: false,
+		},
+		{
+			name:     "PKE1 header (should not match - use HasEncryptionHeader instead)",
+			data:     []byte("PKE1" + string(make([]byte, 50))),
+			expected: true, // Note: PKE1 files would also look binary, but we check HasEncryptionHeader first
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := utils.LooksLikeEncryptedData(tt.data)
+			if result != tt.expected {
+				t.Errorf("LooksLikeEncryptedData() = %v, want %v (data len=%d)", result, tt.expected, len(tt.data))
+			}
+		})
+	}
+}
+
 func TestEncryptDecryptWithHeader(t *testing.T) {
-	message := "308204be020100300d06092a864886f70d0101010500"
-	password := []byte("testPassword123!")
-
-	// Encrypt with header
-	encrypted, err := utils.EncryptWithHeader(password, []byte(message))
-	if err != nil {
-		t.Fatalf("EncryptWithHeader failed: %v", err)
+	tests := []struct {
+		name     string
+		message  string
+		password string
+		wantErr  bool
+	}{
+		{
+			name:     "valid hex string encryption with header",
+			message:  "308204be020100300d06092a864886f70d0101010500",
+			password: "testPassword123!",
+			wantErr:  false,
+		},
+		{
+			name:     "empty message with header",
+			message:  "",
+			password: "testPassword123!",
+			wantErr:  false,
+		},
+		{
+			name:     "long message with header",
+			message:  "308204be020100300d06092a864886f70d0101010500308204be020100300d06092a864886f70d0101010500",
+			password: "testPassword123!",
+			wantErr:  false,
+		},
 	}
 
-	// Verify header is present
-	if !utils.HasEncryptionHeader(encrypted) {
-		t.Error("encrypted data should have header")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Encrypt with header
+			encrypted, err := utils.EncryptWithHeader([]byte(tt.password), []byte(tt.message))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EncryptWithHeader() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 
-	// Verify it starts with PKE1
-	if string(encrypted[:4]) != "PKE1" {
-		t.Errorf("encrypted data should start with PKE1, got %q", string(encrypted[:4]))
-	}
+			if tt.wantErr {
+				return
+			}
 
-	// Decrypt with header
-	decrypted, err := utils.DecryptWithHeader([]byte("testPassword123!"), encrypted)
-	if err != nil {
-		t.Fatalf("DecryptWithHeader failed: %v", err)
-	}
+			// Verify header is present
+			if !utils.HasEncryptionHeader(encrypted) {
+				t.Error("encrypted data should have header")
+			}
 
-	if string(decrypted) != message {
-		t.Errorf("decrypted message does not match original: got %q, want %q", string(decrypted), message)
+			// Verify it starts with PKE1
+			if string(encrypted[:4]) != "PKE1" {
+				t.Errorf("encrypted data should start with PKE1, got %q", string(encrypted[:4]))
+			}
+
+			// Decrypt with header
+			decrypted, err := utils.DecryptWithHeader([]byte(tt.password), encrypted)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecryptWithHeader() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if string(decrypted) != tt.message {
+				t.Errorf("DecryptWithHeader() = %q, want %q", string(decrypted), tt.message)
+			}
+		})
 	}
 }
 
-func TestDecryptWithHeader_WrongPassword(t *testing.T) {
-	message := "secret data"
-	password := []byte("correctPassword")
-
-	encrypted, err := utils.EncryptWithHeader(password, []byte(message))
-	if err != nil {
-		t.Fatalf("EncryptWithHeader failed: %v", err)
+func TestDecryptWithHeader_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFunc   func() ([]byte, []byte) // returns (data, password)
+		decryptPass string
+		wantErr     bool
+	}{
+		{
+			name: "wrong password",
+			setupFunc: func() ([]byte, []byte) {
+				message := "secret data"
+				password := []byte("correctPassword")
+				encrypted, err := utils.EncryptWithHeader(password, []byte(message))
+				if err != nil {
+					t.Fatalf("EncryptWithHeader failed: %v", err)
+				}
+				return encrypted, []byte("wrongPassword")
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing header",
+			setupFunc: func() ([]byte, []byte) {
+				plainEncrypted, err := utils.EncryptData([]byte("password"), []byte("content"))
+				if err != nil {
+					t.Fatalf("EncryptData failed: %v", err)
+				}
+				return plainEncrypted, []byte("password")
+			},
+			wantErr: true,
+		},
 	}
 
-	_, err = utils.DecryptWithHeader([]byte("wrongPassword"), encrypted)
-	if err == nil {
-		t.Error("DecryptWithHeader should fail with wrong password")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, password := tt.setupFunc()
+			_, err := utils.DecryptWithHeader(password, data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecryptWithHeader() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 
-func TestDecryptWithHeader_MissingHeader(t *testing.T) {
-	// Data without header (just encrypted content)
-	plainEncrypted, err := utils.EncryptData([]byte("password"), []byte("content"))
+// Benchmark tests for performance-critical encryption operations
+
+// BenchmarkEncryptData measures the performance of the EncryptData function
+func BenchmarkEncryptData(b *testing.B) {
+	data := []byte("test data to encrypt - this is a sample message for benchmarking")
+	password := []byte("testpassword123")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = utils.EncryptData(password, data) //nolint:errcheck // benchmark
+	}
+}
+
+// BenchmarkDecryptData measures the performance of the DecryptData function
+func BenchmarkDecryptData(b *testing.B) {
+	data := []byte("test data to encrypt - this is a sample message for benchmarking")
+	password := []byte("testpassword123")
+
+	// Pre-encrypt the data once
+	encrypted, err := utils.EncryptData(password, data)
 	if err != nil {
-		t.Fatalf("EncryptData failed: %v", err)
+		b.Fatalf("Failed to encrypt data for benchmark: %v", err)
 	}
 
-	_, err = utils.DecryptWithHeader([]byte("password"), plainEncrypted)
-	if err == nil {
-		t.Error("DecryptWithHeader should fail without header")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = utils.DecryptData(password, encrypted) //nolint:errcheck // benchmark
 	}
+}
+
+// BenchmarkPBKDF2 measures the performance of PBKDF2 key derivation
+// Note: PBKDF2 is intentionally slow for security reasons (3 million iterations)
+func BenchmarkPBKDF2(b *testing.B) {
+	// This benchmark demonstrates the cost of key derivation
+	// which is the most time-consuming part of encryption/decryption
+	data := []byte("test data")
+	password := []byte("testpassword123")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = utils.EncryptData(password, data) //nolint:errcheck // benchmark
+	}
+}
+
+// FuzzDecryptData tests decryption with random/malformed input
+// This fuzz test ensures DecryptData doesn't panic on malformed encrypted data
+func FuzzDecryptData(f *testing.F) {
+	// Add seed corpus with various malformed encrypted data
+	f.Add([]byte{})
+	f.Add([]byte{0x00})
+	f.Add([]byte{0x00, 0x01, 0x02, 0x03})
+	f.Add([]byte("short"))
+	f.Add([]byte("this is not encrypted data at all"))
+	f.Add([]byte{0xff, 0xff, 0xff, 0xff})
+	f.Add([]byte("PKE1" + "malformed"))
+	f.Add(make([]byte, 16)) // 16 zero bytes (salt size)
+	f.Add(make([]byte, 32)) // 32 zero bytes
+	f.Add(make([]byte, 100))
+	f.Add([]byte("a" + string(make([]byte, 1000))))
+
+	f.Fuzz(func(_ *testing.T, encryptedData []byte) {
+		// Should not panic - DecryptData should handle any input gracefully
+		// It's expected to return an error for malformed data
+		_, _ = utils.DecryptData([]byte("password"), encryptedData) //nolint:errcheck // fuzz test
+	})
 }

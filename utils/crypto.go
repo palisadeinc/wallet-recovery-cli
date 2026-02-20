@@ -1,3 +1,6 @@
+// Copyright 2024 Palisade
+// SPDX-License-Identifier: Apache-2.0
+
 package utils
 
 import (
@@ -6,19 +9,23 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/mr-tron/base58"
 	"math/big"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/mr-tron/base58"
 
 	"filippo.io/edwards25519"
 	"github.com/ethereum/go-ethereum/crypto"
-	//nolint:staticcheck // RIPEMD-160 is required by XRP protocol for address generation
-	"golang.org/x/crypto/ripemd160"
+
+	"golang.org/x/crypto/ripemd160" //nolint:gosec // Required for Bitcoin/XRP address derivation per BIP-0013
 )
 
 func GetEthereumAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	pkey, err := crypto.HexToECDSA(hex.EncodeToString(privateKeyBytes))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to convert private key to ECDSA: %w", err)
 	}
 	return crypto.PubkeyToAddress(pkey.PublicKey).Hex(), nil
 }
@@ -39,7 +46,7 @@ func GetSolanaAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error)
 	// Create scalar from the little-endian bytes
 	scalar, err := edwards25519.NewScalar().SetCanonicalBytes(littleEndianKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to create scalar from private key: %v", err)
+		return "", fmt.Errorf("failed to create scalar from private key: %w", err)
 	}
 
 	// Public key is g^{privateKey} where g is the Ed25519 base point
@@ -76,7 +83,7 @@ func GetXRPAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	sha256Hash := sha256.Sum256(pubKeyBytes)
 
 	// 2. RIPEMD-160 hash of the SHA-256 hash
-	ripemd := ripemd160.New()
+	ripemd := ripemd160.New() //nolint:gosec // Required for XRP address derivation per XRPL spec
 	ripemd.Write(sha256Hash[:])
 	accountID := ripemd.Sum(nil)
 
@@ -89,12 +96,50 @@ func GetXRPAddressFromPrivateKeyBytes(privateKeyBytes []byte) (string, error) {
 	checksum := checksum2[:4]
 
 	// 5. Append checksum to payload
-	addressBytes := append(payload, checksum...)
+	addressBytes := make([]byte, len(payload)+len(checksum))
+	copy(addressBytes, payload)
+	copy(addressBytes[len(payload):], checksum)
 
 	// 6. Base58 encode
 	// XRP uses a custom alphabet: "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
 	xrpAlphabet := "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
 	return base58EncodeWithAlphabet(addressBytes, xrpAlphabet), nil
+}
+
+// GetBitcoinAddressFromPrivateKeyBytes derives a Bitcoin Native SegWit (P2WPKH) address
+// from SECP256K1 private key bytes. Returns testnet address (tb1...) by default.
+// For mainnet addresses (bc1...), set mainnet parameter to true.
+func GetBitcoinAddressFromPrivateKeyBytes(privateKeyBytes []byte, mainnet bool) (string, error) {
+	// Create ECDSA private key from bytes
+	privateKey := new(ecdsa.PrivateKey)
+	privateKey.D = new(big.Int).SetBytes(privateKeyBytes)
+	privateKey.PublicKey.Curve = crypto.S256() // Use secp256k1 curve
+	privateKey.PublicKey.X, privateKey.PublicKey.Y = privateKey.PublicKey.Curve.ScalarBaseMult(privateKeyBytes)
+
+	// Get compressed public key (33 bytes)
+	pubKeyBytes := elliptic.MarshalCompressed(privateKey.PublicKey.Curve, privateKey.PublicKey.X, privateKey.PublicKey.Y)
+
+	// Parse with btcec for proper Bitcoin key handling
+	pubKey, err := btcec.ParsePubKey(pubKeyBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse public key: %w", err)
+	}
+
+	// Select network params
+	params := &chaincfg.TestNet3Params
+	if mainnet {
+		params = &chaincfg.MainNetParams
+	}
+
+	// Generate Native SegWit address (P2WPKH) from the compressed public key
+	// This creates a witness pubkey hash address (bc1... or tb1...)
+	pubKeyHash := btcutil.Hash160(pubKey.SerializeCompressed())
+	address, err := btcutil.NewAddressWitnessPubKeyHash(pubKeyHash, params)
+	if err != nil {
+		return "", fmt.Errorf("failed to create witness address: %w", err)
+	}
+
+	return address.EncodeAddress(), nil
 }
 
 // base58EncodeWithAlphabet encodes bytes using a custom alphabet

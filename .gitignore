@@ -1,3 +1,5 @@
 .idea
 *.der
 *.iml
+coverage.out
+wallet-recovery-cli
