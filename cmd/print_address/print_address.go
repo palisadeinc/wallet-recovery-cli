@@ -88,9 +88,10 @@ Security Notes:
 			utils.ClearSensitiveBytes(contentBytes)
 		}()
 
-		// Auto-detect encryption by checking for PKE1 header
+		// Auto-detect encryption by checking for PKE1 header or attempting decryption
+		// We support both headerless (legacy) and header-based (PKE1) encrypted files
 		if utils.HasEncryptionHeader(fileBytes) {
-			cmd.Println("Encrypted private key detected.")
+			cmd.Println("Encrypted private key detected (PKE1 header).")
 			cmd.Print("Enter password to decrypt private key: ")
 			passwordBytes, err := term.ReadPassword(syscall.Stdin)
 			if err != nil {
@@ -101,6 +102,23 @@ Security Notes:
 
 			contentBytes, err = utils.DecryptWithHeader(passwordBytes, fileBytes)
 			// passwordBytes is cleared by DecryptWithHeader
+			if err != nil {
+				cmd.PrintErrln("Error decrypting private key: incorrect password or corrupted file")
+				return fmt.Errorf("failed to decrypt private key file: %w", err)
+			}
+		} else if utils.LooksLikeEncryptedData(fileBytes) {
+			// Legacy headerless encrypted file - try to decrypt
+			cmd.Println("Encrypted private key detected (legacy format).")
+			cmd.Print("Enter password to decrypt private key: ")
+			passwordBytes, err := term.ReadPassword(syscall.Stdin)
+			if err != nil {
+				cmd.PrintErrln("\nError reading password:", err)
+				return fmt.Errorf("failed to read password: %w", err)
+			}
+			cmd.Println()
+
+			contentBytes, err = utils.DecryptData(passwordBytes, fileBytes)
+			// passwordBytes is cleared by DecryptData
 			if err != nil {
 				cmd.PrintErrln("Error decrypting private key: incorrect password or corrupted file")
 				return fmt.Errorf("failed to decrypt private key file: %w", err)

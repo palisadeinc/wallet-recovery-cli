@@ -409,7 +409,7 @@ Security Notes:
 						confirmPasswordBytes[i] = 0
 					}
 
-					contentBytes, err = utils.EncryptData(passwordBytes, contentBytes)
+					contentBytes, err = utils.EncryptWithHeader(passwordBytes, contentBytes)
 					// clear sensitive data
 					defer func() {
 						for i := range passwordBytes {

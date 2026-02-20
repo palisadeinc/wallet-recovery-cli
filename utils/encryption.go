@@ -150,6 +150,37 @@ func HasEncryptionHeader(data []byte) bool {
 	return string(data[:MagicHeaderSize]) == MagicHeaderRSAKey
 }
 
+// LooksLikeEncryptedData checks if data appears to be encrypted (headerless legacy format).
+// It uses heuristics: encrypted data is binary (non-printable) and has sufficient length
+// for salt + nonce + ciphertext (minimum ~45 bytes for AES-GCM with 16-byte auth tag).
+// This is a best-effort detection for backwards compatibility with pre-header encrypted files.
+func LooksLikeEncryptedData(data []byte) bool {
+	// Minimum size: 16 (salt) + 12 (nonce) + 16 (auth tag) + 1 (min ciphertext) = 45 bytes
+	const minEncryptedSize = 45
+
+	if len(data) < minEncryptedSize {
+		return false
+	}
+
+	// Check if data looks binary (non-text)
+	// Encrypted data should have high entropy and non-printable characters
+	nonPrintableCount := 0
+	sampleSize := min(len(data), 64) // Check first 64 bytes
+
+	for i := 0; i < sampleSize; i++ {
+		b := data[i]
+		// Count bytes outside printable ASCII range (32-126) and common whitespace
+		if b < 32 || b > 126 {
+			if b != '\n' && b != '\r' && b != '\t' {
+				nonPrintableCount++
+			}
+		}
+	}
+
+	// If more than 30% of sampled bytes are non-printable, it's likely binary/encrypted
+	return nonPrintableCount > sampleSize*30/100
+}
+
 // EncryptWithHeader encrypts content using AES-256-GCM and prepends a magic header.
 // Format: [4 bytes header "PKE1"] + [16 bytes salt] + [12 bytes nonce] + [ciphertext + auth tag]
 func EncryptWithHeader(passwordBytes, contentBytes []byte) ([]byte, error) {

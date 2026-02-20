@@ -108,7 +108,13 @@ Security Notes:
 			return fmt.Errorf("failed to open encrypted private key file: %w", err)
 		}
 
-		contentBytes, err := utils.DecryptData(passwordBytes, encryptedPrivateKeyFileBytes)
+		// Support both header-based (PKE1) and headerless (legacy) encrypted files
+		var contentBytes []byte
+		if utils.HasEncryptionHeader(encryptedPrivateKeyFileBytes) {
+			contentBytes, err = utils.DecryptWithHeader(passwordBytes, encryptedPrivateKeyFileBytes)
+		} else {
+			contentBytes, err = utils.DecryptData(passwordBytes, encryptedPrivateKeyFileBytes)
+		}
 		if err != nil {
 			cmd.PrintErrln("Error decrypting private key file:", err)
 			return fmt.Errorf("failed to decrypt private key file: %w", err)
