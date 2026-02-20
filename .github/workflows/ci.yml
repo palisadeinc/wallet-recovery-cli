@@ -69,12 +69,11 @@ jobs:
         with:
           extra_args: --only-verified
 
-  # Build binaries for release
+  # Build binaries - runs on all events to catch cross-platform issues early
   build:
     name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-22.04
     needs: [pre-commit, secrets-scan]
-    if: github.event_name == 'push' || github.event_name == 'release'
     strategy:
       matrix:
         goos: [linux, darwin, windows]
@@ -163,7 +162,6 @@ jobs:
     name: Generate SBOM
     runs-on: ubuntu-22.04
     needs: [pre-commit, secrets-scan]
-    if: github.event_name == 'push' || github.event_name == 'release'
     steps:
       - uses: actions/checkout@v4
 
