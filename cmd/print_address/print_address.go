@@ -5,7 +5,7 @@ package print_address
 
 import (
 	"fmt"
-	"syscall"
+	"os"
 
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 	"github.com/spf13/cobra"
@@ -98,7 +98,7 @@ Security Notes:
 		if utils.HasEncryptionHeader(fileBytes) {
 			cmd.Println("Encrypted private key detected (PKE1 header).")
 			cmd.Print("Enter password to decrypt private key: ")
-			passwordBytes, err := term.ReadPassword(syscall.Stdin)
+			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 			if err != nil {
 				cmd.PrintErrln("\nError reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)
@@ -115,7 +115,7 @@ Security Notes:
 			// Legacy headerless encrypted file - try to decrypt
 			cmd.Println("Encrypted private key detected (legacy format).")
 			cmd.Print("Enter password to decrypt private key: ")
-			passwordBytes, err := term.ReadPassword(syscall.Stdin)
+			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 			if err != nil {
 				cmd.PrintErrln("\nError reading password:", err)
 				return fmt.Errorf("failed to read password: %w", err)

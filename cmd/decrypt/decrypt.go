@@ -5,7 +5,7 @@ package decrypt
 
 import (
 	"fmt"
-	"syscall"
+	"os"
 
 	"github.com/palisadeinc/wallet-recovery-cli/utils"
 	"github.com/spf13/cobra"
@@ -95,7 +95,7 @@ Security Notes:
 		}
 
 		cmd.Print("Enter encryption password: ")
-		passwordBytes, err := term.ReadPassword(syscall.Stdin)
+		passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
 			cmd.PrintErrln("Error reading password:", err)
 			return fmt.Errorf("failed to read password: %w", err)
