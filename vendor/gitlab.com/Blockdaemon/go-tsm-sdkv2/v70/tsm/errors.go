@@ -1,6 +1,7 @@
 package tsm
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -45,6 +46,9 @@ func toTSMError(err error, fallback tsmError) error {
 }
 
 func wrapWithSessionID(fallback tsmError, err error, sessionID string) error {
+	if sessionID == "" {
+		return toTSMError(err, fallback)
+	}
 	return fmt.Errorf("%w sessionID=%s", toTSMError(err, fallback), sessionID)
 }
 
@@ -68,5 +72,6 @@ func checkStatusCode(response *http.Response) error {
 
 func wrapAsError(sentinel tsmError, response *http.Response) error {
 	reason, _ := io.ReadAll(response.Body)
+	reason = bytes.TrimSpace(reason)
 	return fmt.Errorf("%w ; node returned %d: %s", sentinel, response.StatusCode, reason)
 }

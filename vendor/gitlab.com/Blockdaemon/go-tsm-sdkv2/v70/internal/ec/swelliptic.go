@@ -99,15 +99,18 @@ func (e *swEllipticCurve) Double(x1, y1 *big.Int) (x, y *big.Int) {
 }
 
 func (e *swEllipticCurve) ScalarMult(x1, y1 *big.Int, k []byte) (x, y *big.Int) {
-	kk := new(big.Int).SetBytes(k)
-	kk = new(big.Int).Mod(kk, e.params.N)
-
 	x2, y2, z2 := big.NewInt(1), big.NewInt(1), big.NewInt(0)
 	x3, y3, z3 := new(big.Int).Set(x1), new(big.Int).Set(y1), big.NewInt(1)
 
 	b := newArithmeticBuffer()
 
-	for i := kk.BitLen() - 1; i >= 0; i-- {
+	kk := new(big.Int).SetBytes(k)
+	bitLen := kk.BitLen()
+	if bitLen < e.params.N.BitLen() {
+		bitLen = e.params.N.BitLen()
+	}
+
+	for i := bitLen - 1; i >= 0; i-- {
 		if kk.Bit(i) == 0 {
 			e.jacobianAdd(b, x3, y3, z3, x2, y2, z2)
 			e.jacobianDouble(b, x2, y2, z2)

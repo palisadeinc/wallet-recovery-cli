@@ -174,7 +174,7 @@ func Verify(publicKey []byte, input *SignInput, signature []byte) bool {
 }
 
 func Hash(input *SignInput) (ec.Scalar, error) {
-	return poseidon.Hash(poseidon.ThreeW, poseidon.NetworkType(input.networkID), input.FieldElements())
+	return poseidon.Hash(poseidon.NetworkType(input.networkID), input.FieldElements())
 }
 
 func msgHash(publicKey ec.Point, rx ec.Scalar, input *SignInput) (ec.Scalar, error) {
@@ -197,7 +197,7 @@ func msgDerive(privateKey ec.Scalar, input *SignInput, publicKey ec.Point) ec.Sc
 	_, _ = h.Write(inputBytes)
 	hash := h.Sum(nil)
 
-	// Clear top two bits
+	// Clear the top two bits
 	hash[31] &= 0x3F
 	ec.ReverseSlice(hash)
 	fe, err := fq.DecodeScalar(hash)
