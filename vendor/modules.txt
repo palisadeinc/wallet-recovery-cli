@@ -1,5 +1,5 @@
-# filippo.io/edwards25519 v1.1.0
-## explicit; go 1.20
+# filippo.io/edwards25519 v1.2.0
+## explicit; go 1.24.0
 filippo.io/edwards25519
 filippo.io/edwards25519/field
 # github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260208002143-2551aa251e34
@@ -41,12 +41,13 @@ github.com/consensys/gnark-crypto/utils/cpu
 ## explicit; go 1.17
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
-# github.com/ethereum/go-ethereum v1.16.8
+# github.com/ethereum/go-ethereum v1.17.0
 ## explicit; go 1.24.0
 github.com/ethereum/go-ethereum/common
 github.com/ethereum/go-ethereum/common/hexutil
 github.com/ethereum/go-ethereum/common/math
 github.com/ethereum/go-ethereum/crypto
+github.com/ethereum/go-ethereum/crypto/keccak
 github.com/ethereum/go-ethereum/crypto/secp256k1
 github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/include
 github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/src
@@ -125,10 +126,11 @@ github.com/spf13/viper/internal/features
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.1.0
+# gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.2.4
 ## explicit; go 1.23.0
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/base58
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/bits
+gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/blsvariant
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/caching
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/combination
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/crypto/bip340
