@@ -2,8 +2,6 @@ module github.com/palisadeinc/wallet-recovery-cli
 
 go 1.25.7
 
-replace gitlab.com/sepior/go-tsm-sdkv2 => gitlab.com/sepior/go-tsm-sdkv2.git v0.0.0-20240201124516-cdcef25d2903
-
 require (
 	github.com/btcsuite/btcd v0.25.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6
