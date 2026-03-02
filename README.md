@@ -35,7 +35,7 @@ git clone https://github.com/palisadeinc/wallet-recovery-cli.git
 cd wallet-recovery-cli
 
 # Build the binary
-go build -o recovery
+go build -o wallet-recovery-cli
 ```
 
 ## Usage
@@ -46,10 +46,10 @@ Generate an RSA 4096-bit keypair for MPC recovery:
 
 ```bash
 # Generate with binary DER output (default, industry standard)
-./recovery generate-recovery-keypair --private-key-file=private.der --public-key-file=public.der
+wallet-recovery-cli generate-recovery-keypair --private-key-file=private.der --public-key-file=public.der
 
 # Generate with hex-encoded output (legacy format)
-./wallet-recovery-cli generate-recovery-keypair --private-key-file=private.der --public-key-file=public.hex --format=hex
+wallet-recovery-cli generate-recovery-keypair --private-key-file=private.der --public-key-file=public.hex --format=hex
 ```
 
 Required flags:
@@ -68,7 +68,7 @@ Recover a private key from recovery data (supports both ECDSA/SECP256K1 and ED25
 
 ```bash
 # For ECDSA/SECP256K1 (Ethereum) - default
-./recovery recover \
+wallet-recovery-cli recover \
   --recovery-kit-file=recovery-kit.b64 \
   --private-key-file=private.der \
   --quorum-id=<UUID> \
@@ -76,7 +76,7 @@ Recover a private key from recovery data (supports both ECDSA/SECP256K1 and ED25
   --output-file=recovered.enc    # Optional – save to file instead of stdout
 
 # For ED25519 (Solana)
-./recovery recover \
+wallet-recovery-cli recover \
   --recovery-kit-file=recovery-kit.b64 \
   --private-key-file=private.der \
   --quorum-id=<UUID> \
@@ -114,7 +114,7 @@ The recovery operation performs the following steps:
 Decrypt a private key file that was encrypted by the `recover` command:
 
 ```bash
-./recovery decrypt --encrypted-private-key-file=recovered.enc --decrypted-output-file=private.der
+wallet-recovery-cli decrypt --encrypted-private-key-file=recovered.enc --decrypted-output-file=private.der
 ```
 
 Required flags:
@@ -129,13 +129,13 @@ Print the blockchain address derived from a recovered private key:
 
 ```bash
 # Plain-text private key file (auto-detects key type)
-./recovery print-address --private-key-file=private.der
+wallet-recovery-cli print-address --private-key-file=private.der
 
 # Encrypted private key file (auto-detected, will prompt for password)
-./recovery print-address --private-key-file=recovered.enc
+wallet-recovery-cli print-address --private-key-file=recovered.enc
 
 # Specify key type explicitly (useful when auto-detection is ambiguous)
-./recovery print-address --private-key-file=private.der --key-type=ED25519
+wallet-recovery-cli print-address --private-key-file=private.der --key-type=ED25519
 ```
 
 Required flags:
