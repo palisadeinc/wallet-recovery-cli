@@ -167,7 +167,7 @@ func LooksLikeEncryptedData(data []byte) bool {
 	nonPrintableCount := 0
 	sampleSize := min(len(data), 64) // Check first 64 bytes
 
-	for i := 0; i < sampleSize; i++ {
+	for i := range sampleSize {
 		b := data[i]
 		// Count bytes outside printable ASCII range (32-126) and common whitespace
 		if b < 32 || b > 126 {

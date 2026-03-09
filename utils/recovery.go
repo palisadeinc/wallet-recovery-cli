@@ -74,7 +74,7 @@ func RecoverECDSAPrivateKey(
 	recoveryDataBytes, rootWalletKeyPkix []byte, quorumID, keyID uuid.UUID, ersRSAPrivateKey *rsa.PrivateKey,
 	ersPublicKey *rsa.PublicKey,
 ) ([]byte, error) {
-	ersLabel := sha256.Sum256([]byte(fmt.Sprintf("%s-%s", quorumID, keyID)))
+	ersLabel := sha256.Sum256(fmt.Appendf(nil, "%s-%s", quorumID, keyID))
 
 	// Convert PKIX public key to JSON format for TSM SDK v70
 	jsonPublicKey, err := convertPKIXToJSON(rootWalletKeyPkix, "SECP256K1")
@@ -111,7 +111,7 @@ func RecoverED25519PrivateKey(
 	recoveryDataBytes, rootWalletKeyPkix []byte, quorumID, keyID uuid.UUID, ersRSAPrivateKey *rsa.PrivateKey,
 	ersPublicKey *rsa.PublicKey,
 ) ([]byte, error) {
-	ersLabel := sha256.Sum256([]byte(fmt.Sprintf("%s-%s", quorumID, keyID)))
+	ersLabel := sha256.Sum256(fmt.Appendf(nil, "%s-%s", quorumID, keyID))
 
 	// Convert PKIX public key to JSON format for TSM SDK v70
 	jsonPublicKey, err := convertPKIXToJSON(rootWalletKeyPkix, "ED25519")
