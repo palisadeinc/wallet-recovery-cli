@@ -2,8 +2,9 @@ package ec
 
 import (
 	"fmt"
-	"github.com/gtank/ristretto255"
 	"math/big"
+
+	"github.com/gtank/ristretto255"
 )
 
 var (
@@ -37,12 +38,12 @@ func newRistretto255() Curve {
 	params.g = Point{
 		curve:     curve,
 		basePoint: true,
-		value:     ristretto255.NewElement().Base(),
+		value:     ristretto255.NewGeneratorElement(),
 	}
 
 	params.o = Point{
 		curve: curve,
-		value: ristretto255.NewElement(),
+		value: ristretto255.NewIdentityElement(),
 	}
 
 	params.zn = fields[fieldEdwards25519Zn]
@@ -50,8 +51,8 @@ func newRistretto255() Curve {
 	ristretto255ScOne = ristretto255.NewScalar()
 	ristretto255ScMinusOne = ristretto255.NewScalar()
 
-	_ = ristretto255ScOne.Decode([]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-	_ = ristretto255ScMinusOne.Decode([]byte{236, 211, 245, 92, 26, 99, 18, 88, 214, 156, 247, 162, 222, 249, 222, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16})
+	_, _ = ristretto255ScOne.SetCanonicalBytes([]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	_, _ = ristretto255ScMinusOne.SetCanonicalBytes([]byte{236, 211, 245, 92, 26, 99, 18, 88, 214, 156, 247, 162, 222, 249, 222, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16})
 
 	params.cofactor = big.NewInt(1)
 
@@ -135,19 +136,15 @@ func (c ristretto255Curve) curveID() uint16 {
 }
 
 func (c ristretto255Curve) pointEncode(p interface{}, compressed bool) []byte {
-	return toRistretto255Point(p).Encode(nil)
+	return toRistretto255Point(p).Bytes()
 }
 
 func (c ristretto255Curve) pointDecode(b []byte, largeSubgroupCheck bool) (interface{}, error) {
 	var p ristretto255.Element
-	err := p.Decode(b)
+	_, err := p.SetCanonicalBytes(b)
 	if err != nil {
 		return nil, fmt.Errorf("invalid %s point representation", c.params.name)
 	}
-	if largeSubgroupCheck && !c.subgroupCheck(&p) {
-		return nil, fmt.Errorf("point on %s is not in the large subgroup", c.params.name)
-	}
-
 	return &p, nil
 }
 
@@ -167,22 +164,22 @@ func (c ristretto255Curve) pointMultiply(p interface{}, e Scalar, basePoint, con
 	e.Value().FillBytes(ee[:])
 	ReverseSlice(ee[:])
 	var x ristretto255.Scalar
-	err := x.Decode(ee[:])
+	_, err := x.SetCanonicalBytes(ee[:])
 	if err != nil {
 		panic("invalid scalar")
 	}
 
 	if constantTime {
 		if basePoint {
-			r := ristretto255.NewElement().ScalarBaseMult(&x)
+			r := ristretto255.NewIdentityElement().ScalarBaseMult(&x)
 			return r
 		} else {
-			r := ristretto255.NewElement().ScalarMult(&x, toRistretto255Point(p))
+			r := ristretto255.NewIdentityElement().ScalarMult(&x, toRistretto255Point(p))
 			return r
 		}
 	} else {
 		pp := toRistretto255Point(p)
-		return ristretto255.NewElement().VarTimeMultiScalarMult([]*ristretto255.Scalar{&x}, []*ristretto255.Element{pp})
+		return ristretto255.NewIdentityElement().VarTimeMultiScalarMult([]*ristretto255.Scalar{&x}, []*ristretto255.Element{pp})
 	}
 }
 
@@ -202,18 +199,9 @@ func (c ristretto255Curve) pointIsPointAtInfinity(p interface{}) bool {
 }
 
 func (c ristretto255Curve) pointIsInLargeSubgroup(p interface{}) bool {
-	pp := toRistretto255Point(p)
-
-	return c.subgroupCheck(pp)
+	return true
 }
 
 func (c ristretto255Curve) pointEquals(p, q interface{}) bool {
 	return toRistretto255Point(p).Equal(toRistretto255Point(q)) == 1
-}
-
-func (c ristretto255Curve) subgroupCheck(p *ristretto255.Element) bool {
-	var r ristretto255.Element
-	r.VarTimeMultiScalarMult([]*ristretto255.Scalar{ristretto255ScMinusOne, ristretto255ScOne}, []*ristretto255.Element{p, p})
-
-	return r.Equal(toRistretto255Point(c.params.o.value)) == 1
 }

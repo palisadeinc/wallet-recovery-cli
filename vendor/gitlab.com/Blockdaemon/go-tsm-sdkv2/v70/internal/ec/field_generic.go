@@ -2,9 +2,10 @@ package ec
 
 import (
 	"fmt"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/random"
 	"io"
 	"math/big"
+
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/random"
 )
 
 type genericField struct {

@@ -2,10 +2,11 @@ package ers
 
 import (
 	"encoding/binary"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/combination"
-	"golang.org/x/crypto/blake2b"
 	"io"
 	"math/big"
+
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/combination"
+	"golang.org/x/crypto/blake2b"
 )
 
 type RecoveryContext struct {

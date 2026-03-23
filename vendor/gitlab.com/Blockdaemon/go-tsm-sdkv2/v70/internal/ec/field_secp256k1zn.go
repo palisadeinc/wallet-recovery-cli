@@ -2,11 +2,12 @@ package ec
 
 import (
 	"fmt"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/random"
 	"io"
 	"math/big"
 	"sync"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/random"
 )
 
 type secp256k1ZnField struct {

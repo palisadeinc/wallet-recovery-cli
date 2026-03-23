@@ -5,12 +5,13 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"fmt"
+	"reflect"
+	"sync"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/polynomial"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/secretshare"
 	"golang.org/x/sync/errgroup"
-	"reflect"
-	"sync"
 )
 
 // Validate validates recovery data using the ERS public key and an external public key. If no error is returned, the

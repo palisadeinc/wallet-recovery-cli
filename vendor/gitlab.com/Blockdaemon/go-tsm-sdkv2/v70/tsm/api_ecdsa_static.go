@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/caching"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/crypto/ecdsa"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/derivekeys"
@@ -219,12 +220,13 @@ func ECDSARecoverPrivateKey(recoveryData []byte, ersPrivateKey *rsa.PrivateKey, 
 		return nil, fmt.Errorf("recover private key: recovery data is not for for an ECDSA private key")
 	}
 
-	privateKey, err := ers.RecoverPrivateKey(jsonRecoveryData, ersPrivateKey, ersLabel)
+	ersDecryptor := ers.NewDefaultDecryptor(ersPrivateKey)
+	privateKey, err := ers.RecoverPrivateKey(jsonRecoveryData, ersDecryptor, ersLabel)
 	if err != nil {
 		return nil, fmt.Errorf("recover private key: unable to recover private key: %w", err)
 	}
 
-	auxDataPrivate, err := ers.RecoverAuxDataPrivate(jsonRecoveryData, ersPrivateKey, ersLabel)
+	auxDataPrivate, err := ers.RecoverAuxDataPrivate(jsonRecoveryData, ersDecryptor, ersLabel)
 	if err != nil {
 		return nil, fmt.Errorf("recover private key: unable to recover private auxiliary data: %w", err)
 	}
