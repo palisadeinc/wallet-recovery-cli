@@ -1,15 +1,18 @@
 package ecdsa
 
 import (
+	"fmt"
+	"math/big"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 	"golang.org/x/crypto/cryptobyte"
 	"golang.org/x/crypto/cryptobyte/asn1"
-	"math/big"
 )
 
 var maxSigned32BitValue, _ = new(big.Int).SetString("7FFFFFFF", 16)
 
 type Signature struct {
+	curve      ec.Curve
 	r, s       ec.Scalar
 	recoveryID int
 }
@@ -22,10 +25,28 @@ func NewSignature(R ec.Point, s ec.Scalar) Signature {
 	s, recoveryID := getSmallestS(s, getRecoveryID(R))
 
 	return Signature{
+		curve:      R.Curve(),
 		r:          s.Field().NewScalarWithModularReduction(x),
 		s:          s,
 		recoveryID: recoveryID,
 	}
+}
+
+func DecodeASN1(sig []byte, curve ec.Curve, recoveryID int) (Signature, error) {
+	r, s, err := decodeASN1(sig)
+	if err != nil {
+		return Signature{}, err
+	}
+	return Signature{
+		curve:      curve,
+		r:          curve.Zn().NewScalarWithModularReduction(r),
+		s:          curve.Zn().NewScalarWithModularReduction(s),
+		recoveryID: recoveryID,
+	}, nil
+}
+
+func (s Signature) Encode() []byte {
+	return s.ASN1()
 }
 
 func (s Signature) ASN1() []byte {
@@ -39,6 +60,10 @@ func (s Signature) ASN1() []byte {
 		panic(err)
 	}
 	return sig
+}
+
+func (s Signature) Curve() ec.Curve {
+	return s.curve
 }
 
 func (s Signature) R() *big.Int {
@@ -94,18 +119,11 @@ func Verify(publicKey ec.Point, hash []byte, r, s *big.Int) bool {
 }
 
 func VerifyASN1(publicKey ec.Point, hash, sig []byte) bool {
-	var inner cryptobyte.String
-	var r, s []byte
-	input := cryptobyte.String(sig)
-	if !input.ReadASN1(&inner, asn1.SEQUENCE) ||
-		!input.Empty() ||
-		!inner.ReadASN1Integer(&r) ||
-		!inner.ReadASN1Integer(&s) ||
-		!inner.Empty() {
+	r, s, err := decodeASN1(sig)
+	if err != nil {
 		return false
 	}
-
-	return Verify(publicKey, hash, new(big.Int).SetBytes(r), new(big.Int).SetBytes(s))
+	return Verify(publicKey, hash, r, s)
 }
 
 func NewScalarFromHash(messageHash []byte, field ec.Field) ec.Scalar {
@@ -149,6 +167,20 @@ func getSmallestS(s ec.Scalar, recoveryID int) (ec.Scalar, int) {
 	}
 
 	return s, recoveryID
+}
+
+func decodeASN1(sig []byte) (r, s *big.Int, err error) {
+	var inner cryptobyte.String
+	var rBytes, sBytes []byte
+	input := cryptobyte.String(sig)
+	if !input.ReadASN1(&inner, asn1.SEQUENCE) ||
+		!input.Empty() ||
+		!inner.ReadASN1Integer(&rBytes) ||
+		!inner.ReadASN1Integer(&sBytes) ||
+		!inner.Empty() {
+		return nil, nil, fmt.Errorf("invalid ASN1 signature")
+	}
+	return new(big.Int).SetBytes(rBytes), new(big.Int).SetBytes(sBytes), nil
 }
 
 func hashToInt(hash []byte, zn ec.Field) *big.Int {

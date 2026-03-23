@@ -3,8 +3,9 @@ package ec
 import (
 	"bytes"
 	"fmt"
-	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
 	"math/big"
+
+	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
 )
 
 type bls12381E2CurveParams struct {

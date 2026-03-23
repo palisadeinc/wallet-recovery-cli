@@ -3,16 +3,49 @@ package ers
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"fmt"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/polynomial"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/secretshare"
 )
 
-func RecoverPrivateKey(recoveryData RecoveryData, ersPrivateKey *rsa.PrivateKey, ersLabel []byte) (ec.Scalar, error) {
-	threshold, sharingType, keyParts, err := validate(recoveryData, &ersPrivateKey.PublicKey, ersLabel, nil)
+type Decryptor interface {
+	Decrypt(ciphertext, label []byte) (plaintext []byte, err error)
+	PublicKey() (*rsa.PublicKey, error)
+}
+
+type DefaultDecryptor struct {
+	privateKey *rsa.PrivateKey
+	publicKey  *rsa.PublicKey
+}
+
+func NewDefaultDecryptor(privateKey *rsa.PrivateKey) *DefaultDecryptor {
+	return &DefaultDecryptor{
+		privateKey: privateKey,
+		publicKey:  privateKey.Public().(*rsa.PublicKey),
+	}
+}
+
+func (d *DefaultDecryptor) Decrypt(ciphertext, label []byte) (plaintext []byte, err error) {
+	return rsa.DecryptOAEP(sha256.New(), rand.Reader, d.privateKey, ciphertext, label)
+
+}
+
+func (d *DefaultDecryptor) PublicKey() (*rsa.PublicKey, error) {
+	return d.publicKey, nil
+}
+
+func RecoverPrivateKey(recoveryData RecoveryData, ersDecryptor Decryptor, ersLabel []byte) (ec.Scalar, error) {
+	ersPublicKey, err := ersDecryptor.PublicKey()
+	if err != nil {
+		return ec.Scalar{}, fmt.Errorf("failed to fetch ERS public key: %w", err)
+	}
+
+	threshold, sharingType, keyParts, err := validate(recoveryData, ersPublicKey, ersLabel, nil)
 	if err != nil {
 		return ec.Scalar{}, fmt.Errorf("invalid recovery data: %w", err)
 	}
@@ -43,7 +76,7 @@ func RecoverPrivateKey(recoveryData RecoveryData, ersPrivateKey *rsa.PrivateKey,
 		}
 
 		for j, encryptedValue := range keyPart.EncryptedValues {
-			value, err := rsa.DecryptOAEP(sha256.New(), nil, ersPrivateKey, encryptedValue, ersLabel)
+			value, err := ersDecryptor.Decrypt(encryptedValue, ersLabel)
 			if err != nil {
 				// Decryption failed. Skip this entry and try the next encrypted value
 				continue
@@ -71,11 +104,11 @@ func RecoverAuxDataPublic(recoveryData RecoveryData) []byte {
 	return recoveryData.PartialRecoveryData[0].AuxDataPublic
 }
 
-func RecoverAuxDataPrivate(recoveryData RecoveryData, ersPrivateKey *rsa.PrivateKey, ersLabel []byte) ([]byte, error) {
+func RecoverAuxDataPrivate(recoveryData RecoveryData, ersDecryptor Decryptor, ersLabel []byte) ([]byte, error) {
 	encryptedAuxDataEncryptionKey := recoveryData.PartialRecoveryData[0].AuxDataWrappedEncryptionKey
 	encryptedPrivateAuxData := recoveryData.PartialRecoveryData[0].AuxDataPrivateEncrypted
 
-	auxDataEncryptionKey, err := rsa.DecryptOAEP(sha256.New(), nil, ersPrivateKey, encryptedAuxDataEncryptionKey, ersLabel)
+	auxDataEncryptionKey, err := ersDecryptor.Decrypt(encryptedAuxDataEncryptionKey, ersLabel)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt aux data encryption key: %w", err)
 	}

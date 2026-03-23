@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/partialresults/partialrsa"
 )
 
@@ -54,7 +55,7 @@ func RSAFinalizeDecryptionOAEP(hashFunction string, label []byte, partialSignatu
 	if err != nil {
 		return nil, err
 	}
-	return partialrsa.FinalizeRSADecryptionOAEP(partialResults, h.New(), label)
+	return partialrsa.FinalizeRSADecryptionOAEP(partialResults, h, label)
 }
 
 // RSAFinalizeDecryptionRaw performs raw RSA decryption.

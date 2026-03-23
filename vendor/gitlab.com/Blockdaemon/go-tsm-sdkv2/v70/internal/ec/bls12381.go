@@ -2,6 +2,7 @@ package ec
 
 import (
 	"fmt"
+
 	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
 )
 

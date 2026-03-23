@@ -8,10 +8,11 @@ import (
 	"crypto/subtle"
 	"encoding/gob"
 	"fmt"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/secretshare"
 	"hash"
 	"math/big"
 	"sort"
+
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/secretshare"
 )
 
 const rsaPartialResultVersion = 1
@@ -147,7 +148,7 @@ func FinalizeRSADecryptionPKCS1v15(partialResults []RSAPartialResult) ([]byte, e
 	return em[index:], nil
 }
 
-func FinalizeRSADecryptionOAEP(partialResults []RSAPartialResult, hash hash.Hash, label []byte) ([]byte, error) {
+func FinalizeRSADecryptionOAEP(partialResults []RSAPartialResult, hash crypto.Hash, label []byte) ([]byte, error) {
 	combiner, err := newRSAPartialResultCombiner(partialResults)
 	if err != nil {
 		return nil, err
@@ -159,17 +160,18 @@ func FinalizeRSADecryptionOAEP(partialResults []RSAPartialResult, hash hash.Hash
 
 	// The rest of this method is about checking and removing OAEP padding, and it's copied from crypto/rsa/rsa.go
 
-	hash.Write(label)
-	lHash := hash.Sum(nil)
-	hash.Reset()
+	h := hash.New()
+	h.Write(label)
+	lHash := h.Sum(nil)
+	h.Reset()
 
 	firstByteIsZero := subtle.ConstantTimeByteEq(em[0], 0)
 
 	seed := em[1 : hash.Size()+1]
 	db := em[hash.Size()+1:]
 
-	mgf1XOR(seed, hash, db)
-	mgf1XOR(db, hash, seed)
+	mgf1XOR(seed, h, db)
+	mgf1XOR(db, h, seed)
 
 	lHash2 := db[0:hash.Size()]
 
@@ -258,7 +260,7 @@ func (e *rsaPartialResultCombiner) Add(partialResult RSAPartialResult) error {
 	if partialResult.Version < 1 || partialResult.Version > rsaPartialResultVersion {
 		return fmt.Errorf("unsupported partial result version: %d", partialResult.Version)
 	}
-	
+
 	if partialResult.ProtocolID != "RSA" {
 		return fmt.Errorf("unsupported protocol for RSA: %s", partialResult.ProtocolID)
 	}

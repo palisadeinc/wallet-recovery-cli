@@ -7,9 +7,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"math/big"
 	"sync"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 const (
@@ -26,6 +27,7 @@ const (
 	curvePallasMina   = 4020
 	curveRistretto256 = 4030
 	curveBabyJubjub   = 4040
+	curveEdwards377   = 4050
 )
 
 var (
@@ -42,6 +44,7 @@ var (
 	PallasMina   Curve
 	Ristretto255 Curve
 	BabyJubjub   Curve
+	Edwards377   Curve
 
 	curvesInitialized sync.Once
 	curves            = map[uint16]Curve{}
@@ -159,6 +162,9 @@ func initCurves() {
 
 		BabyJubjub = newBabyJubjub()
 		curves[BabyJubjub.curveID()] = BabyJubjub
+
+		Edwards377 = newEdwards377()
+		curves[Edwards377.curveID()] = Edwards377
 	})
 }
 
