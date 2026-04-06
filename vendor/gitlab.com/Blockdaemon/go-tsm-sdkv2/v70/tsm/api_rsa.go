@@ -6,8 +6,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/transport"
 	"net/http"
+
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/transport"
 )
 
 const (

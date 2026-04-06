@@ -526,6 +526,46 @@ func selectReductionPolynomial(reductionSize int) BitSet {
 	panic(fmt.Sprintf(unsupportedGFLength, reductionSize))
 }
 
+// GetGF2kGenerator returns a generator for the finite field GF(2^k).
+// The returned value will be a generator with respect to the irreducible polynomial used in GF2Reduce(x, k).
+func GetGF2kGenerator(k int) (generator BitSet, err error) {
+	b := NewZeroSet(k)
+
+	// NOTE: As long as we always use primitive, and not just irreducible polynomials to define GF(2^k), i.e.,
+	// in the selectReductionPolynomial() method above, then x, aka the bit string 00000010, is always a primitive
+	// element and hence generates GF(2^k).
+
+	switch k {
+	case 64:
+
+		// The polynomial x^64 + x^4 + x^3 + x + 1 is irreducible in GF(2^64) and x is a primitive element
+		// in GF(2^64) since it generates GF(2^64)*. In "bit string" representation, the polynomial f(x)=x is
+		// equivalent to the value [0, 0, ..., 1, 0]. Can be verified using the Python galois package:
+		//
+		//   import galois
+		//   GF = galois.GF(2**64, irreducible_poly="x^64 + x^4 + x^3 + x + 1")
+		//   print(GF.properties)
+		b.Set(1)
+
+	case 128:
+
+		// The polynomial x^128 + x^7 + x^2 + x + 1 is irreducible in GF(2^128) and x is a primitive element
+		// in GF(2^128) since it generates GF(2^128)*. In "bit string" representation, the polynomial f(x)=x is
+		// equivalent to the value [0, 0, ..., 1, 0]. Can be verified using the Python galois package:
+		//
+		//   import galois
+		//   GF = galois.GF(2**128, irreducible_poly="x^128 + x^7 + x^2 + x + 1")
+		//   print(GF.properties)
+		b.Set(1)
+
+	default:
+		return BitSet{}, fmt.Errorf("no generator specified for GF(2^k), k = %d", k)
+
+	}
+
+	return b, nil
+}
+
 func GF2Mul(a, b BitSet) BitSet {
 	if len(a.limbs) <= 2 && len(b.limbs) <= 2 {
 		return gF2Mul128(a, b)

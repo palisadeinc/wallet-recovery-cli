@@ -1,10 +1,11 @@
 package ec
 
 import (
-	"filippo.io/edwards25519"
-	"filippo.io/edwards25519/field"
 	"fmt"
 	"math/big"
+
+	"filippo.io/edwards25519"
+	"filippo.io/edwards25519/field"
 )
 
 var (
