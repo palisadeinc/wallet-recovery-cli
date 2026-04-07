@@ -2,6 +2,7 @@ package ers
 
 import (
 	"crypto/rsa"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 )
 

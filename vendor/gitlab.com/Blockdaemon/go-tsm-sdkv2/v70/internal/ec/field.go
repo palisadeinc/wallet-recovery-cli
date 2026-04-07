@@ -23,6 +23,7 @@ const (
 	fieldStarkCurveZn   = 3010
 	fieldPallasZn       = 3020
 	fieldBabyJubjubZn   = 3040
+	fieldEdwards377Zn   = 3050
 )
 
 var (
@@ -74,6 +75,7 @@ func initFields() {
 		fieldStarkCurveZnModulus := "800000000000010FFFFFFFFFFFFFFFFB781126DCAE7B2321E66A241ADC64D2F"
 		fieldPallasZnModulus := "40000000000000000000000000000000224698FC0994A8DD8C46EB2100000001"
 		fieldBabyJubjubZnModulus := "60C89CE5C263405370A08B6D0302B0BAB3EEDB83920EE0A677297DC392126F1"
+		fieldEdwards377ZnModulus := "04AAD957A68B2955982D1347970DEC005293A3AFC43C8AFEB95AEE9AC33FD9FF"
 
 		fields[fieldSecp256k1Zn] = newSecp256k1ZnField()
 
@@ -108,6 +110,9 @@ func initFields() {
 
 		n, _ = new(big.Int).SetString(fieldBabyJubjubZnModulus, 16)
 		fields[fieldBabyJubjubZn] = newGenericField(n, fieldBabyJubjubZn)
+
+		n, _ = new(big.Int).SetString(fieldEdwards377ZnModulus, 16)
+		fields[fieldEdwards377Zn] = newGenericField(n, fieldEdwards377Zn)
 	})
 }
 

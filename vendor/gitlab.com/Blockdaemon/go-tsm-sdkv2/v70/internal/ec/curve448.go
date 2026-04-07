@@ -2,8 +2,9 @@ package ec
 
 import (
 	"fmt"
-	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec/internal/curve448"
 	"math/big"
+
+	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec/internal/curve448"
 )
 
 var curve448OrderScalar = [56]byte{243, 68, 88, 171, 146, 194, 120, 35, 85, 143, 197, 141, 114, 194, 108, 33, 144, 54, 214, 174, 73, 219, 78, 196, 233, 35, 202, 124, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 63}

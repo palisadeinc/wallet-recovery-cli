@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/crypto/ecdsa"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/ec"
 	"gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/polynomial"
