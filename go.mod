@@ -10,8 +10,8 @@ require (
 	github.com/mr-tron/base58 v1.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/crypto v0.52.0
-	golang.org/x/term v0.43.0
+	golang.org/x/crypto v0.53.0
+	golang.org/x/term v0.44.0
 )
 
 require (
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.2.6
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 )
