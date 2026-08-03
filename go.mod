@@ -10,8 +10,8 @@ require (
 	github.com/mr-tron/base58 v1.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/crypto v0.53.0
-	golang.org/x/term v0.44.0
+	golang.org/x/crypto v0.54.0
+	golang.org/x/term v0.45.0
 )
 
 require (
@@ -28,10 +28,10 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.2.0
-	github.com/bits-and-blooms/bitset v1.24.4 // indirect
-	github.com/consensys/gnark-crypto v0.19.2 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.17.4
+	github.com/bits-and-blooms/bitset v1.24.6 // indirect
+	github.com/consensys/gnark-crypto v0.20.1 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
+	github.com/ethereum/go-ethereum v1.17.5
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -41,8 +41,8 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.2.6
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.2.7
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 )
