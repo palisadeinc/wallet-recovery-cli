@@ -1,6 +1,6 @@
 module github.com/palisadeinc/wallet-recovery-cli
 
-go 1.26.0
+go 1.26.6
 
 require (
 	github.com/btcsuite/btcd v0.25.0
