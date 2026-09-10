@@ -1,6 +1,6 @@
 module github.com/palisadeinc/wallet-recovery-cli
 
-go 1.26.6
+go 1.26.8
 
 require (
 	github.com/btcsuite/btcd v0.25.0
@@ -10,7 +10,7 @@ require (
 	github.com/mr-tron/base58 v1.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/term v0.45.0
 )
 
