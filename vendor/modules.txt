@@ -41,8 +41,8 @@ github.com/consensys/gnark-crypto/utils/cpu
 ## explicit; go 1.17
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
-# github.com/ethereum/go-ethereum v1.17.5
-## explicit; go 1.24.0
+# github.com/ethereum/go-ethereum v1.17.6
+## explicit; go 1.25.0
 github.com/ethereum/go-ethereum/common
 github.com/ethereum/go-ethereum/common/hexutil
 github.com/ethereum/go-ethereum/common/math
@@ -158,7 +158,7 @@ gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/secretshare
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/transport
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/internal/version
 gitlab.com/Blockdaemon/go-tsm-sdkv2/v70/tsm
-# go.yaml.in/yaml/v3 v3.0.4
+# go.yaml.in/yaml/v3 v3.0.5
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
 # golang.org/x/crypto v0.57.0
