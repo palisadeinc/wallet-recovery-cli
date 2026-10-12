@@ -10,8 +10,8 @@ require (
 	github.com/mr-tron/base58 v1.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/crypto v0.57.0
-	golang.org/x/term v0.46.0
+	golang.org/x/crypto v0.58.0
+	golang.org/x/term v0.47.0
 )
 
 require (
@@ -31,7 +31,7 @@ require (
 	github.com/bits-and-blooms/bitset v1.25.0 // indirect
 	github.com/consensys/gnark-crypto v0.21.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
-	github.com/ethereum/go-ethereum v1.17.6
+	github.com/ethereum/go-ethereum v1.17.8
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	gitlab.com/Blockdaemon/go-tsm-sdkv2/v70 v70.2.8
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 )
